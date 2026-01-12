@@ -56,6 +56,7 @@ async function init() {
         initializeResponses();
         initializeDownload();
         initializeMobileMenu();
+        initializeAboutModal();
         
         // Hide loading overlay
         document.getElementById('loading-overlay').classList.add('hidden');
@@ -538,6 +539,35 @@ function initializeDownload() {
         link.href = 'data/survey.csv';
         link.download = 'survey_2026_data_engineering.csv';
         link.click();
+    });
+}
+
+// ===== About Modal =====
+function initializeAboutModal() {
+    const modal = document.getElementById('about-modal');
+    const openBtn = document.getElementById('about-btn');
+    const closeBtn = document.getElementById('close-modal');
+    
+    openBtn.addEventListener('click', () => {
+        modal.hidden = false;
+    });
+    
+    closeBtn.addEventListener('click', () => {
+        modal.hidden = true;
+    });
+    
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.hidden = true;
+        }
+    });
+    
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.hidden) {
+            modal.hidden = true;
+        }
     });
 }
 
