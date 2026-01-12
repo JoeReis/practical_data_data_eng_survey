@@ -7,6 +7,10 @@ let db = null;
 let conn = null;
 let editor = null;
 
+// Chart filters - applied by clicking on chart bars
+// Structure: { column: value, ... }
+const chartFilters = {};
+
 // Chart colors from CSS variables
 const CHART_COLORS = [
     '#58a6ff', '#3fb950', '#d29922', '#f85149', 
@@ -131,6 +135,7 @@ async function initializeFilters() {
 function getWhereClause() {
     const conditions = [];
     
+    // Sidebar filters
     for (const [selectId, column] of Object.entries(filterConfig)) {
         const value = document.getElementById(selectId).value;
         if (value) {
@@ -140,7 +145,100 @@ function getWhereClause() {
         }
     }
     
+    // Chart filters (from clicking on bars)
+    for (const [column, value] of Object.entries(chartFilters)) {
+        const escapedValue = value.replace(/'/g, "''");
+        conditions.push(`${column} = '${escapedValue}'`);
+    }
+    
     return conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+}
+
+// ===== Chart Filter Management =====
+function addChartFilter(column, value) {
+    // Toggle: if clicking same filter, remove it
+    if (chartFilters[column] === value) {
+        delete chartFilters[column];
+    } else {
+        chartFilters[column] = value;
+    }
+    
+    renderFilterPills();
+    onFilterChange();
+}
+
+function removeChartFilter(column) {
+    delete chartFilters[column];
+    renderFilterPills();
+    onFilterChange();
+}
+
+function clearAllChartFilters() {
+    for (const key of Object.keys(chartFilters)) {
+        delete chartFilters[key];
+    }
+    renderFilterPills();
+    onFilterChange();
+}
+
+function renderFilterPills() {
+    const container = document.getElementById('chart-filter-pills');
+    if (!container) return;
+    
+    const entries = Object.entries(chartFilters);
+    
+    if (entries.length === 0) {
+        container.innerHTML = '';
+        container.classList.remove('visible');
+        return;
+    }
+    
+    // Map column names to friendly labels
+    const columnLabels = {
+        'role': 'Role',
+        'org_size': 'Org Size',
+        'industry': 'Industry',
+        'region': 'Region',
+        'ai_usage_frequency': 'AI Usage',
+        'storage_environment': 'Storage',
+        'architecture_trend': 'Architecture',
+        'team_growth_2026': 'Team Growth',
+        'biggest_bottleneck': 'Bottleneck'
+    };
+    
+    let html = entries.map(([column, value]) => {
+        const label = columnLabels[column] || column;
+        const displayValue = truncateText(value, 20);
+        return `
+            <button class="filter-pill" data-column="${column}" title="${escapeHtml(value)}">
+                <span class="pill-label">${escapeHtml(label)}:</span>
+                <span class="pill-value">${escapeHtml(displayValue)}</span>
+                <svg class="pill-remove" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                </svg>
+            </button>
+        `;
+    }).join('');
+    
+    // Add "Clear all" button if multiple filters
+    if (entries.length > 1) {
+        html += `<button class="filter-pill filter-pill-clear" id="clear-chart-filters">Clear all</button>`;
+    }
+    
+    container.innerHTML = html;
+    container.classList.add('visible');
+    
+    // Attach event listeners
+    container.querySelectorAll('.filter-pill[data-column]').forEach(pill => {
+        pill.addEventListener('click', () => {
+            removeChartFilter(pill.dataset.column);
+        });
+    });
+    
+    const clearBtn = document.getElementById('clear-chart-filters');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearAllChartFilters);
+    }
 }
 
 async function onFilterChange() {
@@ -156,10 +254,12 @@ async function updateFilteredCount() {
 }
 
 function resetFilters() {
+    // Clear sidebar filters
     for (const selectId of Object.keys(filterConfig)) {
         document.getElementById(selectId).value = '';
     }
-    onFilterChange();
+    // Clear chart filters
+    clearAllChartFilters();
 }
 
 // ===== Chart Rendering =====
@@ -206,16 +306,27 @@ async function renderBarChart(chartId, column, whereClause, limit) {
         
         const maxCount = Math.max(...rows.map(r => Number(r.count)));
         
+        // Check if this column has an active chart filter
+        const activeFilterValue = chartFilters[column];
+        
         let html = '<div class="chart-bar-container">';
         
         rows.forEach((row, i) => {
             const percentage = (Number(row.count) / maxCount) * 100;
             const color = CHART_COLORS[i % CHART_COLORS.length];
             const label = truncateText(row.label, 28);
+            const isActive = activeFilterValue === row.label;
+            const activeClass = isActive ? 'active' : '';
+            
+            // Encode the value for use in data attribute
+            const encodedValue = encodeURIComponent(row.label);
             
             html += `
-                <div class="chart-bar-row">
-                    <span class="chart-bar-label" title="${escapeHtml(row.label)}">${escapeHtml(label)}</span>
+                <div class="chart-bar-row chart-bar-clickable ${activeClass}" 
+                     data-column="${column}" 
+                     data-value="${encodedValue}"
+                     title="Click to filter by ${escapeHtml(row.label)}">
+                    <span class="chart-bar-label">${escapeHtml(label)}</span>
                     <div class="chart-bar-track">
                         <div class="chart-bar-fill" style="width: ${percentage}%; background: ${color};"></div>
                     </div>
@@ -226,6 +337,15 @@ async function renderBarChart(chartId, column, whereClause, limit) {
         
         html += '</div>';
         container.innerHTML = html;
+        
+        // Attach click handlers to bars
+        container.querySelectorAll('.chart-bar-clickable').forEach(bar => {
+            bar.addEventListener('click', () => {
+                const col = bar.dataset.column;
+                const value = decodeURIComponent(bar.dataset.value);
+                addChartFilter(col, value);
+            });
+        });
         
     } catch (error) {
         console.error(`Error rendering chart ${chartId}:`, error);
