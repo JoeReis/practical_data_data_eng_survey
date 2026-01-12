@@ -57,7 +57,7 @@ open http://localhost:8080
 ├── data/
 │   ├── survey.parquet  # Optimized data (76 KB)
 │   └── survey.csv      # Downloadable format (570 KB)
-└── ThePracticalData2026StateDataEngineeringSurveyResponses.xlsx
+└── README.md
 ```
 
 ## Data Schema
