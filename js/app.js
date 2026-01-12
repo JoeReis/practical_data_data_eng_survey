@@ -6,6 +6,7 @@ import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.28.0
 let db = null;
 let conn = null;
 let editor = null;
+let lastSqlResults = null; // Store last query results for export
 
 // Chart filters - applied by clicking on chart bars
 // Structure: { column: value, ... }
@@ -409,6 +410,43 @@ function initializeSqlEditor() {
             runQuery();
         });
     });
+    
+    // Export SQL results
+    document.getElementById('export-sql-results').addEventListener('click', exportSqlResults);
+}
+
+function exportSqlResults() {
+    if (!lastSqlResults || !lastSqlResults.rows.length) {
+        return;
+    }
+    
+    const { columns, rows } = lastSqlResults;
+    
+    // Build CSV content
+    let csv = columns.join(',') + '\n';
+    
+    for (const row of rows) {
+        const values = columns.map(col => {
+            const val = row[col];
+            if (val === null || val === undefined) return '';
+            const str = String(val);
+            // Escape quotes and wrap in quotes if contains comma, newline, or quote
+            if (str.includes(',') || str.includes('\n') || str.includes('"')) {
+                return '"' + str.replace(/"/g, '""') + '"';
+            }
+            return str;
+        });
+        csv += values.join(',') + '\n';
+    }
+    
+    // Download
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `sql_results_${rows.length}_rows.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
 }
 
 async function runQuery() {
@@ -431,26 +469,36 @@ async function runQuery() {
         const rows = result.toArray();
         const columns = result.schema.fields.map(f => f.name);
         
+        // Store results for export
+        lastSqlResults = { columns, rows };
+        
         showQueryResults({ columns, rows });
         
     } catch (error) {
         document.getElementById('query-time').textContent = '';
+        lastSqlResults = null;
         showQueryResults({ error: error.message });
     }
 }
 
 function showQueryResults({ columns, rows, error }) {
     const container = document.getElementById('sql-results');
+    const exportBtn = document.getElementById('export-sql-results');
     
     if (error) {
         container.innerHTML = `<p class="error-text">${escapeHtml(error)}</p>`;
+        exportBtn.disabled = true;
         return;
     }
     
     if (rows.length === 0) {
         container.innerHTML = '<p class="placeholder-text">Query returned no results</p>';
+        exportBtn.disabled = true;
         return;
     }
+    
+    // Enable export button
+    exportBtn.disabled = false;
     
     let html = `
         <table class="results-table">

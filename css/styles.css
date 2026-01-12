@@ -584,6 +584,22 @@ body {
     color: var(--color-text-secondary);
 }
 
+.sql-results-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.sql-results-actions .btn {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.75rem;
+}
+
+.sql-results-actions .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 .query-time {
     font-family: var(--font-mono);
     color: var(--color-success);
