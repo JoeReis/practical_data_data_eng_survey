@@ -669,6 +669,13 @@ function initializeCrosstab() {
     updateCrosstab();
 }
 
+// Multi-select columns that need to be split
+const MULTI_SELECT_COLUMNS = ['modeling_pain_points', 'team_focus', 'ai_helps_with'];
+
+function isMultiSelect(column) {
+    return MULTI_SELECT_COLUMNS.includes(column);
+}
+
 async function updateCrosstab() {
     const rowCol = document.getElementById('crosstab-rows').value;
     const colCol = document.getElementById('crosstab-cols').value;
@@ -683,18 +690,68 @@ async function updateCrosstab() {
     try {
         const whereClause = getWhereClause();
         
-        // Get the crosstab data
-        const query = `
-            SELECT 
-                ${rowCol} as row_val,
-                ${colCol} as col_val,
-                COUNT(*) as count
-            FROM survey
-            ${whereClause}
-            ${whereClause ? 'AND' : 'WHERE'} ${rowCol} IS NOT NULL AND ${colCol} IS NOT NULL
-            GROUP BY ${rowCol}, ${colCol}
-            ORDER BY ${rowCol}, ${colCol}
-        `;
+        // Build query based on whether columns are multi-select
+        const rowIsMulti = isMultiSelect(rowCol);
+        const colIsMulti = isMultiSelect(colCol);
+        
+        let query;
+        if (rowIsMulti && colIsMulti) {
+            // Both are multi-select
+            query = `
+                SELECT 
+                    trim(row_item.value) as row_val,
+                    trim(col_item.value) as col_val,
+                    COUNT(*) as count
+                FROM survey,
+                    unnest(string_split(${rowCol}, ',')) as row_item(value),
+                    unnest(string_split(${colCol}, ',')) as col_item(value)
+                ${whereClause}
+                ${whereClause ? 'AND' : 'WHERE'} ${rowCol} IS NOT NULL AND ${colCol} IS NOT NULL
+                GROUP BY trim(row_item.value), trim(col_item.value)
+                ORDER BY row_val, col_val
+            `;
+        } else if (rowIsMulti) {
+            // Only row is multi-select
+            query = `
+                SELECT 
+                    trim(row_item.value) as row_val,
+                    ${colCol} as col_val,
+                    COUNT(*) as count
+                FROM survey,
+                    unnest(string_split(${rowCol}, ',')) as row_item(value)
+                ${whereClause}
+                ${whereClause ? 'AND' : 'WHERE'} ${rowCol} IS NOT NULL AND ${colCol} IS NOT NULL
+                GROUP BY trim(row_item.value), ${colCol}
+                ORDER BY row_val, col_val
+            `;
+        } else if (colIsMulti) {
+            // Only column is multi-select
+            query = `
+                SELECT 
+                    ${rowCol} as row_val,
+                    trim(col_item.value) as col_val,
+                    COUNT(*) as count
+                FROM survey,
+                    unnest(string_split(${colCol}, ',')) as col_item(value)
+                ${whereClause}
+                ${whereClause ? 'AND' : 'WHERE'} ${rowCol} IS NOT NULL AND ${colCol} IS NOT NULL
+                GROUP BY ${rowCol}, trim(col_item.value)
+                ORDER BY row_val, col_val
+            `;
+        } else {
+            // Neither is multi-select (original query)
+            query = `
+                SELECT 
+                    ${rowCol} as row_val,
+                    ${colCol} as col_val,
+                    COUNT(*) as count
+                FROM survey
+                ${whereClause}
+                ${whereClause ? 'AND' : 'WHERE'} ${rowCol} IS NOT NULL AND ${colCol} IS NOT NULL
+                GROUP BY ${rowCol}, ${colCol}
+                ORDER BY ${rowCol}, ${colCol}
+            `;
+        }
         
         const result = await conn.query(query);
         const data = result.toArray();
@@ -705,22 +762,47 @@ async function updateCrosstab() {
         }
         
         // Get unique row and column values with their totals
-        const rowTotalsQuery = `
-            SELECT ${rowCol} as val, COUNT(*) as total
-            FROM survey
-            ${whereClause}
-            ${whereClause ? 'AND' : 'WHERE'} ${rowCol} IS NOT NULL
-            GROUP BY ${rowCol}
-            ORDER BY total DESC
-        `;
-        const colTotalsQuery = `
-            SELECT ${colCol} as val, COUNT(*) as total
-            FROM survey
-            ${whereClause}
-            ${whereClause ? 'AND' : 'WHERE'} ${colCol} IS NOT NULL
-            GROUP BY ${colCol}
-            ORDER BY total DESC
-        `;
+        let rowTotalsQuery, colTotalsQuery;
+        
+        if (rowIsMulti) {
+            rowTotalsQuery = `
+                SELECT trim(item.value) as val, COUNT(*) as total
+                FROM survey, unnest(string_split(${rowCol}, ',')) as item(value)
+                ${whereClause}
+                ${whereClause ? 'AND' : 'WHERE'} ${rowCol} IS NOT NULL
+                GROUP BY trim(item.value)
+                ORDER BY total DESC
+            `;
+        } else {
+            rowTotalsQuery = `
+                SELECT ${rowCol} as val, COUNT(*) as total
+                FROM survey
+                ${whereClause}
+                ${whereClause ? 'AND' : 'WHERE'} ${rowCol} IS NOT NULL
+                GROUP BY ${rowCol}
+                ORDER BY total DESC
+            `;
+        }
+        
+        if (colIsMulti) {
+            colTotalsQuery = `
+                SELECT trim(item.value) as val, COUNT(*) as total
+                FROM survey, unnest(string_split(${colCol}, ',')) as item(value)
+                ${whereClause}
+                ${whereClause ? 'AND' : 'WHERE'} ${colCol} IS NOT NULL
+                GROUP BY trim(item.value)
+                ORDER BY total DESC
+            `;
+        } else {
+            colTotalsQuery = `
+                SELECT ${colCol} as val, COUNT(*) as total
+                FROM survey
+                ${whereClause}
+                ${whereClause ? 'AND' : 'WHERE'} ${colCol} IS NOT NULL
+                GROUP BY ${colCol}
+                ORDER BY total DESC
+            `;
+        }
         
         const [rowTotalsResult, colTotalsResult] = await Promise.all([
             conn.query(rowTotalsQuery),
@@ -844,12 +926,12 @@ function getColumnLabel() {
         'storage_environment': 'Storage',
         'orchestration': 'Orchestration',
         'modeling_approach': 'Modeling',
+        'modeling_pain_points': 'Pain Points',
         'architecture_trend': 'Architecture',
         'team_growth_2026': 'Team Growth',
         'biggest_bottleneck': 'Bottleneck',
         'team_focus': 'Team Focus',
         'ai_helps_with': 'AI Helps With',
-        'modeling_pain_points': 'Modeling Pain Points',
         'education_topic': 'Education Topic'
     };
 }
