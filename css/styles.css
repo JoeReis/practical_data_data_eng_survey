@@ -405,6 +405,54 @@ body {
     padding: var(--space-lg);
 }
 
+.charts-controls {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--space-md);
+}
+
+.charts-metric-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.toggle-label {
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+}
+
+.metric-btn {
+    padding: var(--space-xs) var(--space-md);
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.metric-btn:first-of-type {
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+    border-right: none;
+}
+
+.metric-btn:last-of-type {
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.metric-btn:hover {
+    background: var(--color-border-muted);
+}
+
+.metric-btn.active {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-bg);
+}
+
 .charts-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));

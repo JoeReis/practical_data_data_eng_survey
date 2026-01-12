@@ -12,6 +12,9 @@ let lastSqlResults = null; // Store last query results for export
 // Structure: { column: value, ... }
 const chartFilters = {};
 
+// Chart display mode: 'count' or 'percent'
+let chartMetric = 'count';
+
 // Chart colors from CSS variables
 const CHART_COLORS = [
     '#58a6ff', '#3fb950', '#d29922', '#f85149', 
@@ -284,12 +287,16 @@ const chartConfig = {
 async function updateCharts() {
     const whereClause = getWhereClause();
     
+    // Get total filtered count for percentage calculations
+    const totalResult = await conn.query(`SELECT COUNT(*) as count FROM survey ${whereClause}`);
+    const totalFiltered = Number(totalResult.toArray()[0].count);
+    
     for (const [chartId, config] of Object.entries(chartConfig)) {
-        await renderBarChart(chartId, config.column, whereClause, config.limit);
+        await renderBarChart(chartId, config.column, whereClause, config.limit, totalFiltered);
     }
 }
 
-async function renderBarChart(chartId, column, whereClause, limit) {
+async function renderBarChart(chartId, column, whereClause, limit, totalFiltered) {
     const container = document.getElementById(chartId);
     
     try {
@@ -319,11 +326,21 @@ async function renderBarChart(chartId, column, whereClause, limit) {
         let html = '<div class="chart-bar-container">';
         
         rows.forEach((row, i) => {
-            const percentage = (Number(row.count) / maxCount) * 100;
+            const count = Number(row.count);
+            const barWidth = (count / maxCount) * 100;
             const color = CHART_COLORS[i % CHART_COLORS.length];
             const label = truncateText(row.label, 28);
             const isActive = activeFilterValue === row.label;
             const activeClass = isActive ? 'active' : '';
+            
+            // Display value based on metric mode
+            let displayValue;
+            if (chartMetric === 'percent') {
+                const pct = totalFiltered > 0 ? (count / totalFiltered) * 100 : 0;
+                displayValue = `${pct.toFixed(1)}%`;
+            } else {
+                displayValue = count.toLocaleString();
+            }
             
             // Encode the value for use in data attribute
             const encodedValue = encodeURIComponent(row.label);
@@ -335,9 +352,9 @@ async function renderBarChart(chartId, column, whereClause, limit) {
                      title="Click to filter by ${escapeHtml(row.label)}">
                     <span class="chart-bar-label">${escapeHtml(label)}</span>
                     <div class="chart-bar-track">
-                        <div class="chart-bar-fill" style="width: ${percentage}%; background: ${color};"></div>
+                        <div class="chart-bar-fill" style="width: ${barWidth}%; background: ${color};"></div>
                     </div>
-                    <span class="chart-bar-value">${Number(row.count).toLocaleString()}</span>
+                    <span class="chart-bar-value">${displayValue}</span>
                 </div>
             `;
         });
@@ -376,6 +393,17 @@ function initializeTabs() {
                 content.classList.remove('active');
             });
             document.getElementById(targetId).classList.add('active');
+        });
+    });
+    
+    // Chart metric toggle (count vs percent)
+    const metricBtns = document.querySelectorAll('.metric-btn');
+    metricBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            metricBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            chartMetric = btn.dataset.metric;
+            updateCharts();
         });
     });
 }
