@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 State of Data Engineering Survey Explorer</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- CodeMirror for SQL editor -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <button id="mobile-menu-toggle" class="btn btn-ghost mobile-only" aria-label="Toggle filters">
+                    <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2z"/>
+                    </svg>
+                </button>
+                <div class="header-content">
+                    <h1>2026 State of Data Engineering</h1>
+                    <p class="subtitle">Survey Explorer • <span id="response-count">--</span> responses</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="download-csv" class="btn btn-secondary" title="Download full dataset">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                    </svg>
+                    Download CSV
+                </button>
+            </div>
+        </header>
+
+        <!-- Loading State -->
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p>Loading DuckDB...</p>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Filter Panel -->
+            <aside class="filter-panel">
+                <div class="panel-header">
+                    <h2>Filters</h2>
+                    <div class="panel-header-actions">
+                        <button id="reset-filters" class="btn btn-ghost">Reset</button>
+                        <button id="close-filters" class="btn btn-ghost mobile-only" aria-label="Close filters">
+                            <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-role">Role</label>
+                    <select id="filter-role" class="filter-select">
+                        <option value="">All Roles</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-org-size">Organization Size</label>
+                    <select id="filter-org-size" class="filter-select">
+                        <option value="">All Sizes</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-industry">Industry</label>
+                    <select id="filter-industry" class="filter-select">
+                        <option value="">All Industries</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-region">Region</label>
+                    <select id="filter-region" class="filter-select">
+                        <option value="">All Regions</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-ai-usage">AI Usage Frequency</label>
+                    <select id="filter-ai-usage" class="filter-select">
+                        <option value="">All Frequencies</option>
+                    </select>
+                </div>
+                <div class="filter-stats">
+                    <span id="filtered-count">--</span> of <span id="total-count">--</span> responses
+                </div>
+            </aside>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Tab Navigation -->
+                <nav class="tabs">
+                    <button class="tab active" data-tab="charts">Charts</button>
+                    <button class="tab" data-tab="sql">SQL Query</button>
+                </nav>
+
+                <!-- Charts Tab -->
+                <section id="charts-tab" class="tab-content active">
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h3>By Role</h3>
+                            <div id="chart-role" class="chart"></div>
+                        </div>
+                        <div class="chart-card">
+                            <h3>By Organization Size</h3>
+                            <div id="chart-org-size" class="chart"></div>
+                        </div>
+                        <div class="chart-card">
+                            <h3>By Industry</h3>
+                            <div id="chart-industry" class="chart"></div>
+                        </div>
+                        <div class="chart-card">
+                            <h3>AI Usage Frequency</h3>
+                            <div id="chart-ai-usage" class="chart"></div>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Storage Environment</h3>
+                            <div id="chart-storage" class="chart"></div>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Architecture Trend</h3>
+                            <div id="chart-architecture" class="chart"></div>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Team Growth Expectations</h3>
+                            <div id="chart-growth" class="chart"></div>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Biggest Bottleneck</h3>
+                            <div id="chart-bottleneck" class="chart"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SQL Tab -->
+                <section id="sql-tab" class="tab-content">
+                    <div class="sql-container">
+                        <div class="sql-editor-wrapper">
+                            <div class="sql-header">
+                                <span>SQL Query</span>
+                                <div class="sql-actions">
+                                    <button id="run-query" class="btn btn-primary">
+                                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                            <path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+                                        </svg>
+                                        Run (Ctrl+Enter)
+                                    </button>
+                                </div>
+                            </div>
+                            <textarea id="sql-editor">SELECT 
+    role,
+    COUNT(*) as count
+FROM survey
+GROUP BY role
+ORDER BY count DESC
+LIMIT 10;</textarea>
+                        </div>
+                        <div class="sql-results-wrapper">
+                            <div class="sql-results-header">
+                                <span>Results</span>
+                                <span id="query-time" class="query-time"></span>
+                            </div>
+                            <div id="sql-results" class="sql-results">
+                                <p class="placeholder-text">Run a query to see results</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sql-help">
+                        <details>
+                            <summary>Available Columns</summary>
+                            <div class="columns-list">
+                                <code>timestamp</code>
+                                <code>role</code>
+                                <code>org_size</code>
+                                <code>industry</code>
+                                <code>team_focus</code>
+                                <code>storage_environment</code>
+                                <code>orchestration</code>
+                                <code>ai_usage_frequency</code>
+                                <code>ai_helps_with</code>
+                                <code>ai_adoption</code>
+                                <code>modeling_approach</code>
+                                <code>modeling_pain_points</code>
+                                <code>architecture_trend</code>
+                                <code>biggest_bottleneck</code>
+                                <code>team_growth_2026</code>
+                                <code>education_topic</code>
+                                <code>industry_wish</code>
+                                <code>region</code>
+                            </div>
+                        </details>
+                        <details>
+                            <summary>Example Queries</summary>
+                            <div class="example-queries">
+                                <button class="example-query" data-query="SELECT * FROM survey LIMIT 10;">Show first 10 rows</button>
+                                <button class="example-query" data-query="SELECT role, COUNT(*) as count FROM survey GROUP BY role ORDER BY count DESC;">Responses by Role</button>
+                                <button class="example-query" data-query="SELECT ai_usage_frequency, COUNT(*) as count FROM survey GROUP BY ai_usage_frequency ORDER BY count DESC;">AI Usage Distribution</button>
+                                <button class="example-query" data-query="SELECT industry, AVG(CASE WHEN ai_usage_frequency = 'Multiple times per day' THEN 1 ELSE 0 END) * 100 as pct_heavy_ai_users FROM survey GROUP BY industry ORDER BY pct_heavy_ai_users DESC;">Heavy AI Users by Industry</button>
+                                <button class="example-query" data-query="SELECT storage_environment, architecture_trend, COUNT(*) as count FROM survey GROUP BY storage_environment, architecture_trend ORDER BY count DESC LIMIT 15;">Storage vs Architecture</button>
+                            </div>
+                        </details>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Built with DuckDB-WASM • Data from The Practical Data 2026 Survey</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
+
