@@ -284,7 +284,8 @@ const chartConfig = {
     'chart-bottleneck': { column: 'biggest_bottleneck', limit: 8 },
     'chart-region': { column: 'region', limit: 8 },
     'chart-modeling': { column: 'modeling_approach', limit: 8 },
-    'chart-modeling-pain': { column: 'modeling_pain_points', limit: 10 }
+    'chart-modeling-pain': { column: 'modeling_pain_points', limit: 10 },
+    'chart-education': { column: 'education_topic', limit: 10 }
 };
 
 async function updateCharts() {
