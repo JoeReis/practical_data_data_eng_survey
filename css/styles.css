@@ -767,6 +767,20 @@ body {
     min-width: 180px;
 }
 
+.crosstab-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    margin-left: var(--space-sm);
+}
+
+.crosstab-toggle input {
+    accent-color: var(--color-accent);
+}
+
 .crosstab-table-wrapper {
     flex: 1;
     overflow: auto;
@@ -823,6 +837,24 @@ body {
     max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* Wrapped text mode */
+.crosstab-table.wrap-text th,
+.crosstab-table.wrap-text td {
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+.crosstab-table.wrap-text .crosstab-col-header {
+    max-width: none;
+    min-width: 100px;
+    writing-mode: horizontal-tb;
+}
+
+.crosstab-table.wrap-text .crosstab-row-header {
+    max-width: none;
+    min-width: 150px;
 }
 
 .crosstab-cell {

@@ -582,11 +582,13 @@ function initializeCrosstab() {
     const colSelect = document.getElementById('crosstab-cols');
     const metricSelect = document.getElementById('crosstab-metric');
     const swapBtn = document.getElementById('crosstab-swap');
+    const wrapToggle = document.getElementById('crosstab-wrap-text');
     
     // Update on selection change
     rowSelect.addEventListener('change', updateCrosstab);
     colSelect.addEventListener('change', updateCrosstab);
     metricSelect.addEventListener('change', updateCrosstab);
+    wrapToggle.addEventListener('change', updateCrosstab);
     
     // Swap button
     swapBtn.addEventListener('click', () => {
@@ -694,14 +696,17 @@ async function updateCrosstab() {
         
         // Build the table HTML
         const columnLabels = getColumnLabel();
+        const wrapText = document.getElementById('crosstab-wrap-text').checked;
+        const wrapClass = wrapText ? ' wrap-text' : '';
         
-        let html = '<table class="crosstab-table">';
+        let html = `<table class="crosstab-table${wrapClass}">`;
         
         // Header row
         html += '<thead><tr>';
         html += `<th class="crosstab-corner">${columnLabels[rowCol]} / ${columnLabels[colCol]}</th>`;
         for (const col of cols) {
-            html += `<th class="crosstab-col-header" title="${escapeHtml(col)}">${escapeHtml(truncateText(col, 15))}</th>`;
+            const displayCol = wrapText ? col : truncateText(col, 15);
+            html += `<th class="crosstab-col-header" title="${escapeHtml(col)}">${escapeHtml(displayCol)}</th>`;
         }
         html += '<th class="crosstab-total-header">Total</th>';
         html += '</tr></thead>';
@@ -710,7 +715,8 @@ async function updateCrosstab() {
         html += '<tbody>';
         for (const row of rows) {
             html += '<tr>';
-            html += `<th class="crosstab-row-header" title="${escapeHtml(row)}">${escapeHtml(truncateText(row, 25))}</th>`;
+            const displayRow = wrapText ? row : truncateText(row, 25);
+            html += `<th class="crosstab-row-header" title="${escapeHtml(row)}">${escapeHtml(displayRow)}</th>`;
             
             for (const col of cols) {
                 const count = matrix.get(`${row}|||${col}`) || 0;
