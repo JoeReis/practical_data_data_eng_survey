@@ -51,6 +51,8 @@ async function init() {
         await updateCharts();
         initializeTabs();
         initializeSqlEditor();
+        initializeCrosstab();
+        initializeResponses();
         initializeDownload();
         initializeMobileMenu();
         
@@ -244,6 +246,9 @@ function renderFilterPills() {
 async function onFilterChange() {
     await updateFilteredCount();
     await updateCharts();
+    await updateCrosstab();
+    responsesPage = 0; // Reset to first page when filters change
+    await updateResponses();
 }
 
 async function updateFilteredCount() {
@@ -520,6 +525,434 @@ function closeMobileMenu() {
     filterPanel.classList.remove('open');
     if (backdrop) {
         backdrop.remove();
+    }
+}
+
+// ===== Crosstab =====
+function initializeCrosstab() {
+    const rowSelect = document.getElementById('crosstab-rows');
+    const colSelect = document.getElementById('crosstab-cols');
+    const metricSelect = document.getElementById('crosstab-metric');
+    const swapBtn = document.getElementById('crosstab-swap');
+    
+    // Update on selection change
+    rowSelect.addEventListener('change', updateCrosstab);
+    colSelect.addEventListener('change', updateCrosstab);
+    metricSelect.addEventListener('change', updateCrosstab);
+    
+    // Swap button
+    swapBtn.addEventListener('click', () => {
+        const rowVal = rowSelect.value;
+        const colVal = colSelect.value;
+        rowSelect.value = colVal;
+        colSelect.value = rowVal;
+        updateCrosstab();
+    });
+    
+    // Initial render
+    updateCrosstab();
+}
+
+async function updateCrosstab() {
+    const rowCol = document.getElementById('crosstab-rows').value;
+    const colCol = document.getElementById('crosstab-cols').value;
+    const metric = document.getElementById('crosstab-metric').value;
+    const container = document.getElementById('crosstab-results');
+    
+    if (rowCol === colCol) {
+        container.innerHTML = '<p class="placeholder-text">Please select different dimensions for rows and columns</p>';
+        return;
+    }
+    
+    try {
+        const whereClause = getWhereClause();
+        
+        // Get the crosstab data
+        const query = `
+            SELECT 
+                ${rowCol} as row_val,
+                ${colCol} as col_val,
+                COUNT(*) as count
+            FROM survey
+            ${whereClause}
+            ${whereClause ? 'AND' : 'WHERE'} ${rowCol} IS NOT NULL AND ${colCol} IS NOT NULL
+            GROUP BY ${rowCol}, ${colCol}
+            ORDER BY ${rowCol}, ${colCol}
+        `;
+        
+        const result = await conn.query(query);
+        const data = result.toArray();
+        
+        if (data.length === 0) {
+            container.innerHTML = '<p class="placeholder-text">No data for current filters</p>';
+            return;
+        }
+        
+        // Get unique row and column values with their totals
+        const rowTotalsQuery = `
+            SELECT ${rowCol} as val, COUNT(*) as total
+            FROM survey
+            ${whereClause}
+            ${whereClause ? 'AND' : 'WHERE'} ${rowCol} IS NOT NULL
+            GROUP BY ${rowCol}
+            ORDER BY total DESC
+        `;
+        const colTotalsQuery = `
+            SELECT ${colCol} as val, COUNT(*) as total
+            FROM survey
+            ${whereClause}
+            ${whereClause ? 'AND' : 'WHERE'} ${colCol} IS NOT NULL
+            GROUP BY ${colCol}
+            ORDER BY total DESC
+        `;
+        
+        const [rowTotalsResult, colTotalsResult] = await Promise.all([
+            conn.query(rowTotalsQuery),
+            conn.query(colTotalsQuery)
+        ]);
+        
+        const rowTotals = new Map(rowTotalsResult.toArray().map(r => [r.val, Number(r.total)]));
+        const colTotals = new Map(colTotalsResult.toArray().map(r => [r.val, Number(r.total)]));
+        
+        const rows = Array.from(rowTotals.keys());
+        const cols = Array.from(colTotals.keys());
+        
+        // Build the matrix
+        const matrix = new Map();
+        for (const d of data) {
+            const key = `${d.row_val}|||${d.col_val}`;
+            matrix.set(key, Number(d.count));
+        }
+        
+        // Calculate grand total
+        const grandTotal = Array.from(rowTotals.values()).reduce((a, b) => a + b, 0);
+        
+        // Find max value for heatmap scaling
+        let maxValue = 0;
+        for (const row of rows) {
+            for (const col of cols) {
+                const count = matrix.get(`${row}|||${col}`) || 0;
+                let value;
+                if (metric === 'row_pct') {
+                    value = rowTotals.get(row) > 0 ? (count / rowTotals.get(row)) * 100 : 0;
+                } else if (metric === 'col_pct') {
+                    value = colTotals.get(col) > 0 ? (count / colTotals.get(col)) * 100 : 0;
+                } else {
+                    value = count;
+                }
+                maxValue = Math.max(maxValue, value);
+            }
+        }
+        
+        // Build the table HTML
+        const columnLabels = getColumnLabel();
+        
+        let html = '<table class="crosstab-table">';
+        
+        // Header row
+        html += '<thead><tr>';
+        html += `<th class="crosstab-corner">${columnLabels[rowCol]} / ${columnLabels[colCol]}</th>`;
+        for (const col of cols) {
+            html += `<th class="crosstab-col-header" title="${escapeHtml(col)}">${escapeHtml(truncateText(col, 15))}</th>`;
+        }
+        html += '<th class="crosstab-total-header">Total</th>';
+        html += '</tr></thead>';
+        
+        // Data rows
+        html += '<tbody>';
+        for (const row of rows) {
+            html += '<tr>';
+            html += `<th class="crosstab-row-header" title="${escapeHtml(row)}">${escapeHtml(truncateText(row, 25))}</th>`;
+            
+            for (const col of cols) {
+                const count = matrix.get(`${row}|||${col}`) || 0;
+                let displayValue;
+                let intensity;
+                
+                if (metric === 'row_pct') {
+                    const pct = rowTotals.get(row) > 0 ? (count / rowTotals.get(row)) * 100 : 0;
+                    displayValue = pct > 0 ? `${pct.toFixed(1)}%` : '–';
+                    intensity = maxValue > 0 ? pct / maxValue : 0;
+                } else if (metric === 'col_pct') {
+                    const pct = colTotals.get(col) > 0 ? (count / colTotals.get(col)) * 100 : 0;
+                    displayValue = pct > 0 ? `${pct.toFixed(1)}%` : '–';
+                    intensity = maxValue > 0 ? pct / maxValue : 0;
+                } else {
+                    displayValue = count > 0 ? count.toLocaleString() : '–';
+                    intensity = maxValue > 0 ? count / maxValue : 0;
+                }
+                
+                const bgColor = getHeatmapColor(intensity);
+                const textColor = intensity > 0.5 ? '#ffffff' : 'var(--color-text-primary)';
+                
+                html += `<td class="crosstab-cell" style="background: ${bgColor}; color: ${textColor};" title="${count} responses">${displayValue}</td>`;
+            }
+            
+            // Row total
+            const rowTotal = rowTotals.get(row);
+            html += `<td class="crosstab-row-total">${rowTotal.toLocaleString()}</td>`;
+            html += '</tr>';
+        }
+        
+        // Column totals row
+        html += '<tr class="crosstab-totals-row">';
+        html += '<th class="crosstab-row-header">Total</th>';
+        for (const col of cols) {
+            html += `<td class="crosstab-col-total">${colTotals.get(col).toLocaleString()}</td>`;
+        }
+        html += `<td class="crosstab-grand-total">${grandTotal.toLocaleString()}</td>`;
+        html += '</tr>';
+        
+        html += '</tbody></table>';
+        
+        container.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Crosstab error:', error);
+        container.innerHTML = `<p class="error-text">Error: ${error.message}</p>`;
+    }
+}
+
+function getColumnLabel() {
+    return {
+        'role': 'Role',
+        'org_size': 'Org Size',
+        'industry': 'Industry',
+        'region': 'Region',
+        'ai_usage_frequency': 'AI Usage',
+        'ai_adoption': 'AI Adoption',
+        'storage_environment': 'Storage',
+        'orchestration': 'Orchestration',
+        'modeling_approach': 'Modeling',
+        'architecture_trend': 'Architecture',
+        'team_growth_2026': 'Team Growth',
+        'biggest_bottleneck': 'Bottleneck',
+        'team_focus': 'Team Focus',
+        'ai_helps_with': 'AI Helps With',
+        'modeling_pain_points': 'Modeling Pain Points',
+        'education_topic': 'Education Topic'
+    };
+}
+
+function getHeatmapColor(intensity) {
+    if (intensity === 0) return 'transparent';
+    
+    // Blue heatmap: from light to dark blue
+    const minAlpha = 0.15;
+    const maxAlpha = 0.85;
+    const alpha = minAlpha + (intensity * (maxAlpha - minAlpha));
+    
+    return `rgba(88, 166, 255, ${alpha})`;
+}
+
+// ===== Responses Viewer =====
+let responsesPage = 0;
+const responsesPerPage = 25;
+let responsesTotalCount = 0;
+
+function initializeResponses() {
+    // Pagination buttons
+    document.getElementById('responses-prev').addEventListener('click', () => {
+        if (responsesPage > 0) {
+            responsesPage--;
+            updateResponses();
+        }
+    });
+    
+    document.getElementById('responses-next').addEventListener('click', () => {
+        if ((responsesPage + 1) * responsesPerPage < responsesTotalCount) {
+            responsesPage++;
+            updateResponses();
+        }
+    });
+    
+    // Toggle for text fields
+    document.getElementById('show-text-fields').addEventListener('change', updateResponses);
+    
+    // Export filtered CSV
+    document.getElementById('export-filtered-csv').addEventListener('click', exportFilteredCsv);
+    
+    // Initial load
+    updateResponses();
+}
+
+async function updateResponses() {
+    const container = document.getElementById('responses-results');
+    const showTextFields = document.getElementById('show-text-fields').checked;
+    
+    try {
+        const whereClause = getWhereClause();
+        
+        // Get total count
+        const countResult = await conn.query(`SELECT COUNT(*) as count FROM survey ${whereClause}`);
+        responsesTotalCount = Number(countResult.toArray()[0].count);
+        
+        // Reset to first page if filters changed and we're beyond available data
+        if (responsesPage * responsesPerPage >= responsesTotalCount) {
+            responsesPage = 0;
+        }
+        
+        // Define columns to show
+        const baseColumns = ['role', 'org_size', 'industry', 'region', 'ai_usage_frequency'];
+        const textColumns = ['education_topic', 'industry_wish'];
+        const columns = showTextFields ? [...baseColumns, ...textColumns] : baseColumns;
+        
+        // Get paginated data
+        const query = `
+            SELECT ${columns.join(', ')}
+            FROM survey
+            ${whereClause}
+            ORDER BY timestamp DESC
+            LIMIT ${responsesPerPage}
+            OFFSET ${responsesPage * responsesPerPage}
+        `;
+        
+        const result = await conn.query(query);
+        const rows = result.toArray();
+        
+        // Update counts
+        const startNum = responsesPage * responsesPerPage + 1;
+        const endNum = Math.min((responsesPage + 1) * responsesPerPage, responsesTotalCount);
+        document.getElementById('responses-showing').textContent = rows.length > 0 ? `${startNum}-${endNum}` : '0';
+        document.getElementById('responses-total').textContent = responsesTotalCount.toLocaleString();
+        
+        // Update pagination
+        const totalPages = Math.ceil(responsesTotalCount / responsesPerPage);
+        document.getElementById('responses-page-info').textContent = `Page ${responsesPage + 1} of ${totalPages}`;
+        document.getElementById('responses-prev').disabled = responsesPage === 0;
+        document.getElementById('responses-next').disabled = (responsesPage + 1) * responsesPerPage >= responsesTotalCount;
+        
+        if (rows.length === 0) {
+            container.innerHTML = '<p class="placeholder-text">No responses match current filters</p>';
+            return;
+        }
+        
+        // Column labels
+        const columnLabels = {
+            'role': 'Role',
+            'org_size': 'Org Size',
+            'industry': 'Industry',
+            'region': 'Region',
+            'ai_usage_frequency': 'AI Usage',
+            'education_topic': 'Education Topic',
+            'industry_wish': 'Industry Wish'
+        };
+        
+        // Build table
+        let html = '<table class="responses-table">';
+        html += '<thead><tr>';
+        html += '<th class="response-row-num">#</th>';
+        for (const col of columns) {
+            const isTextCol = textColumns.includes(col);
+            const className = isTextCol ? 'text-column' : '';
+            html += `<th class="${className}">${columnLabels[col] || col}</th>`;
+        }
+        html += '</tr></thead>';
+        
+        html += '<tbody>';
+        rows.forEach((row, i) => {
+            const rowNum = responsesPage * responsesPerPage + i + 1;
+            html += '<tr>';
+            html += `<td class="response-row-num">${rowNum}</td>`;
+            
+            for (const col of columns) {
+                const value = row[col];
+                const isTextCol = textColumns.includes(col);
+                
+                if (isTextCol) {
+                    if (value && value.trim()) {
+                        const truncated = truncateText(value, 100);
+                        const needsExpand = value.length > 100;
+                        html += `
+                            <td class="text-column">
+                                <div class="text-cell ${needsExpand ? 'expandable' : ''}" ${needsExpand ? 'data-full-text="' + escapeHtml(value).replace(/"/g, '&quot;') + '"' : ''}>
+                                    <span class="text-preview">${escapeHtml(truncated)}</span>
+                                    ${needsExpand ? '<button class="expand-btn">Show more</button>' : ''}
+                                </div>
+                            </td>
+                        `;
+                    } else {
+                        html += '<td class="text-column"><span class="empty-text">–</span></td>';
+                    }
+                } else {
+                    html += `<td title="${escapeHtml(value || '')}">${escapeHtml(truncateText(value || '–', 30))}</td>`;
+                }
+            }
+            html += '</tr>';
+        });
+        html += '</tbody></table>';
+        
+        container.innerHTML = html;
+        
+        // Add expand/collapse handlers
+        container.querySelectorAll('.expand-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const cell = e.target.closest('.text-cell');
+                const preview = cell.querySelector('.text-preview');
+                const fullText = cell.dataset.fullText;
+                
+                if (cell.classList.contains('expanded')) {
+                    preview.textContent = truncateText(fullText, 100);
+                    btn.textContent = 'Show more';
+                    cell.classList.remove('expanded');
+                } else {
+                    preview.textContent = fullText;
+                    btn.textContent = 'Show less';
+                    cell.classList.add('expanded');
+                }
+            });
+        });
+        
+    } catch (error) {
+        console.error('Responses error:', error);
+        container.innerHTML = `<p class="error-text">Error: ${error.message}</p>`;
+    }
+}
+
+async function exportFilteredCsv() {
+    try {
+        const whereClause = getWhereClause();
+        const query = `SELECT * FROM survey ${whereClause} ORDER BY timestamp DESC`;
+        const result = await conn.query(query);
+        const rows = result.toArray();
+        
+        if (rows.length === 0) {
+            alert('No data to export with current filters');
+            return;
+        }
+        
+        // Get column names
+        const columns = result.schema.fields.map(f => f.name);
+        
+        // Build CSV content
+        let csv = columns.join(',') + '\n';
+        
+        for (const row of rows) {
+            const values = columns.map(col => {
+                const val = row[col];
+                if (val === null || val === undefined) return '';
+                // Escape quotes and wrap in quotes if contains comma or newline
+                const str = String(val);
+                if (str.includes(',') || str.includes('\n') || str.includes('"')) {
+                    return '"' + str.replace(/"/g, '""') + '"';
+                }
+                return str;
+            });
+            csv += values.join(',') + '\n';
+        }
+        
+        // Download
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `survey_filtered_${rows.length}_responses.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+        
+    } catch (error) {
+        console.error('Export error:', error);
+        alert('Error exporting data: ' + error.message);
     }
 }
 

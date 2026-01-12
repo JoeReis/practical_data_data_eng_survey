@@ -102,6 +102,8 @@
                 <!-- Tab Navigation -->
                 <nav class="tabs">
                     <button class="tab active" data-tab="charts">Charts</button>
+                    <button class="tab" data-tab="crosstab">Crosstab</button>
+                    <button class="tab" data-tab="responses">Responses</button>
                     <button class="tab" data-tab="sql">SQL Query</button>
                 </nav>
 
@@ -142,6 +144,101 @@
                         <div class="chart-card">
                             <h3>Biggest Bottleneck</h3>
                             <div id="chart-bottleneck" class="chart"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Crosstab Tab -->
+                <section id="crosstab-tab" class="tab-content">
+                    <div class="crosstab-container">
+                        <div class="crosstab-controls">
+                            <div class="crosstab-control-group">
+                                <label for="crosstab-rows">Rows</label>
+                                <select id="crosstab-rows" class="filter-select">
+                                    <option value="role">Role</option>
+                                    <option value="org_size">Organization Size</option>
+                                    <option value="industry">Industry</option>
+                                    <option value="region">Region</option>
+                                    <option value="ai_usage_frequency" selected>AI Usage Frequency</option>
+                                    <option value="ai_adoption">AI Adoption Level</option>
+                                    <option value="storage_environment">Storage Environment</option>
+                                    <option value="orchestration">Orchestration</option>
+                                    <option value="modeling_approach">Modeling Approach</option>
+                                    <option value="architecture_trend">Architecture Trend</option>
+                                    <option value="team_growth_2026">Team Growth 2026</option>
+                                    <option value="biggest_bottleneck">Biggest Bottleneck</option>
+                                </select>
+                            </div>
+                            <div class="crosstab-control-group">
+                                <label for="crosstab-cols">Columns</label>
+                                <select id="crosstab-cols" class="filter-select">
+                                    <option value="role">Role</option>
+                                    <option value="org_size" selected>Organization Size</option>
+                                    <option value="industry">Industry</option>
+                                    <option value="region">Region</option>
+                                    <option value="ai_usage_frequency">AI Usage Frequency</option>
+                                    <option value="ai_adoption">AI Adoption Level</option>
+                                    <option value="storage_environment">Storage Environment</option>
+                                    <option value="orchestration">Orchestration</option>
+                                    <option value="modeling_approach">Modeling Approach</option>
+                                    <option value="architecture_trend">Architecture Trend</option>
+                                    <option value="team_growth_2026">Team Growth 2026</option>
+                                    <option value="biggest_bottleneck">Biggest Bottleneck</option>
+                                </select>
+                            </div>
+                            <div class="crosstab-control-group">
+                                <label for="crosstab-metric">Show</label>
+                                <select id="crosstab-metric" class="filter-select">
+                                    <option value="row_pct">Row %</option>
+                                    <option value="col_pct">Column %</option>
+                                    <option value="count">Count</option>
+                                </select>
+                            </div>
+                            <button id="crosstab-swap" class="btn btn-ghost" title="Swap rows and columns">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5zm14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5z"/>
+                                </svg>
+                                Swap
+                            </button>
+                        </div>
+                        <div class="crosstab-table-wrapper">
+                            <div id="crosstab-results" class="crosstab-results">
+                                <p class="placeholder-text">Select dimensions to see cross-tabulation</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Responses Tab -->
+                <section id="responses-tab" class="tab-content">
+                    <div class="responses-container">
+                        <div class="responses-header">
+                            <div class="responses-info">
+                                <span>Showing <strong id="responses-showing">0</strong> of <strong id="responses-total">0</strong> responses</span>
+                            </div>
+                            <div class="responses-controls">
+                                <label class="responses-toggle">
+                                    <input type="checkbox" id="show-text-fields" checked>
+                                    <span>Show open-ended responses</span>
+                                </label>
+                                <button id="export-filtered-csv" class="btn btn-secondary">
+                                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                                    </svg>
+                                    Export Filtered
+                                </button>
+                            </div>
+                        </div>
+                        <div class="responses-table-wrapper">
+                            <div id="responses-results" class="responses-results">
+                                <p class="placeholder-text">Loading responses...</p>
+                            </div>
+                        </div>
+                        <div class="responses-pagination">
+                            <button id="responses-prev" class="btn btn-ghost" disabled>← Previous</button>
+                            <span id="responses-page-info">Page 1</span>
+                            <button id="responses-next" class="btn btn-ghost">Next →</button>
                         </div>
                     </div>
                 </section>

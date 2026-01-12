@@ -705,6 +705,320 @@ body {
     color: var(--color-accent);
 }
 
+/* ===== Crosstab Tab ===== */
+#crosstab-tab {
+    display: none;
+    flex-direction: column;
+    height: calc(100vh - 130px);
+}
+
+#crosstab-tab.active {
+    display: flex;
+}
+
+.crosstab-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+.crosstab-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--color-bg-elevated);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.crosstab-control-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.crosstab-control-group label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.crosstab-control-group .filter-select {
+    min-width: 180px;
+}
+
+.crosstab-table-wrapper {
+    flex: 1;
+    overflow: auto;
+    padding: var(--space-lg);
+}
+
+.crosstab-results {
+    min-height: 200px;
+}
+
+/* Crosstab Table */
+.crosstab-table {
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+    width: auto;
+    min-width: 100%;
+}
+
+.crosstab-table th,
+.crosstab-table td {
+    padding: var(--space-sm) var(--space-md);
+    text-align: center;
+    border: 1px solid var(--color-border);
+    white-space: nowrap;
+}
+
+.crosstab-corner {
+    background: var(--color-bg-elevated);
+    text-align: left !important;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    position: sticky;
+    left: 0;
+    z-index: 2;
+}
+
+.crosstab-col-header {
+    background: var(--color-bg-elevated);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.crosstab-row-header {
+    background: var(--color-bg-elevated);
+    text-align: left !important;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.crosstab-cell {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    transition: transform 0.1s ease;
+}
+
+.crosstab-cell:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 2px var(--color-accent);
+    z-index: 1;
+    position: relative;
+}
+
+.crosstab-total-header,
+.crosstab-row-total,
+.crosstab-col-total,
+.crosstab-grand-total {
+    background: var(--color-bg-card);
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.crosstab-totals-row th,
+.crosstab-totals-row td {
+    border-top: 2px solid var(--color-border);
+}
+
+.crosstab-grand-total {
+    background: var(--color-accent-muted);
+    color: var(--color-accent);
+}
+
+/* ===== Responses Tab ===== */
+#responses-tab {
+    display: none;
+    flex-direction: column;
+    height: calc(100vh - 130px);
+}
+
+#responses-tab.active {
+    display: flex;
+}
+
+.responses-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+.responses-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--color-bg-elevated);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.responses-info {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+}
+
+.responses-info strong {
+    color: var(--color-text-primary);
+}
+
+.responses-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.responses-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+}
+
+.responses-toggle input {
+    accent-color: var(--color-accent);
+}
+
+.responses-table-wrapper {
+    flex: 1;
+    overflow: auto;
+    padding: var(--space-md) var(--space-lg);
+}
+
+.responses-results {
+    min-height: 200px;
+}
+
+.responses-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-lg);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--color-bg-elevated);
+    border-top: 1px solid var(--color-border);
+}
+
+#responses-page-info {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+}
+
+/* Responses Table */
+.responses-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+}
+
+.responses-table th,
+.responses-table td {
+    padding: var(--space-sm) var(--space-md);
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: top;
+}
+
+.responses-table th {
+    background: var(--color-bg-elevated);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    white-space: nowrap;
+}
+
+.responses-table tr:hover td {
+    background: var(--color-bg-card);
+}
+
+.response-row-num {
+    width: 50px;
+    text-align: center !important;
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+}
+
+.responses-table td {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.responses-table td.text-column {
+    max-width: 300px;
+    white-space: normal;
+}
+
+.text-cell {
+    position: relative;
+}
+
+.text-preview {
+    display: block;
+    line-height: 1.5;
+    color: var(--color-text-primary);
+}
+
+.text-cell.expandable .text-preview {
+    color: var(--color-text-secondary);
+}
+
+.text-cell.expanded .text-preview {
+    color: var(--color-text-primary);
+}
+
+.expand-btn {
+    display: inline-block;
+    margin-top: var(--space-xs);
+    padding: 2px var(--space-sm);
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: var(--color-accent);
+    background: transparent;
+    border: 1px solid var(--color-accent);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.expand-btn:hover {
+    background: var(--color-accent);
+    color: var(--color-bg);
+}
+
+.empty-text {
+    color: var(--color-text-muted);
+    font-style: italic;
+}
+
+.responses-table th.text-column {
+    min-width: 200px;
+}
+
 /* ===== Footer ===== */
 .footer {
     padding: var(--space-md) var(--space-lg);
