@@ -655,7 +655,12 @@ function initializeCrosstab() {
     rowSelect.addEventListener('change', updateCrosstab);
     colSelect.addEventListener('change', updateCrosstab);
     metricSelect.addEventListener('change', updateCrosstab);
-    wrapToggle.addEventListener('change', updateCrosstab);
+    wrapToggle.addEventListener('change', () => {
+        // Just re-render, don't re-query
+        if (crosstabData) {
+            renderCrosstabTable();
+        }
+    });
     
     // Swap button
     swapBtn.addEventListener('click', () => {
@@ -672,6 +677,11 @@ function initializeCrosstab() {
 
 // Multi-select columns that need to be split
 const MULTI_SELECT_COLUMNS = ['modeling_pain_points', 'team_focus', 'ai_helps_with'];
+
+// Crosstab sorting state
+let crosstabSortCol = null; // null = sort by row total, or column value
+let crosstabSortDir = 'desc'; // 'asc' or 'desc'
+let crosstabData = null; // Store last crosstab data for re-sorting
 
 function isMultiSelect(column) {
     return MULTI_SELECT_COLUMNS.includes(column);
@@ -826,94 +836,144 @@ async function updateCrosstab() {
         // Calculate grand total
         const grandTotal = Array.from(rowTotals.values()).reduce((a, b) => a + b, 0);
         
-        // Find max value for heatmap scaling
-        let maxValue = 0;
-        for (const row of rows) {
-            for (const col of cols) {
-                const count = matrix.get(`${row}|||${col}`) || 0;
-                let value;
-                if (metric === 'row_pct') {
-                    value = rowTotals.get(row) > 0 ? (count / rowTotals.get(row)) * 100 : 0;
-                } else if (metric === 'col_pct') {
-                    value = colTotals.get(col) > 0 ? (count / colTotals.get(col)) * 100 : 0;
-                } else {
-                    value = count;
-                }
-                maxValue = Math.max(maxValue, value);
-            }
-        }
+        // Store data for sorting
+        crosstabData = {
+            rows, cols, matrix, rowTotals, colTotals, grandTotal, rowCol, colCol, metric
+        };
         
-        // Build the table HTML
-        const columnLabels = getColumnLabel();
-        const wrapText = document.getElementById('crosstab-wrap-text').checked;
-        const wrapClass = wrapText ? ' wrap-text' : '';
+        // Reset sort when data changes
+        crosstabSortCol = '_total';
+        crosstabSortDir = 'desc';
         
-        let html = `<table class="crosstab-table${wrapClass}">`;
-        
-        // Header row
-        html += '<thead><tr>';
-        html += `<th class="crosstab-corner">${columnLabels[rowCol]} / ${columnLabels[colCol]}</th>`;
-        for (const col of cols) {
-            const displayCol = wrapText ? col : truncateText(col, 15);
-            html += `<th class="crosstab-col-header" title="${escapeHtml(col)}">${escapeHtml(displayCol)}</th>`;
-        }
-        html += '<th class="crosstab-total-header">Total</th>';
-        html += '</tr></thead>';
-        
-        // Data rows
-        html += '<tbody>';
-        for (const row of rows) {
-            html += '<tr>';
-            const displayRow = wrapText ? row : truncateText(row, 25);
-            html += `<th class="crosstab-row-header" title="${escapeHtml(row)}">${escapeHtml(displayRow)}</th>`;
-            
-            for (const col of cols) {
-                const count = matrix.get(`${row}|||${col}`) || 0;
-                let displayValue;
-                let intensity;
-                
-                if (metric === 'row_pct') {
-                    const pct = rowTotals.get(row) > 0 ? (count / rowTotals.get(row)) * 100 : 0;
-                    displayValue = pct > 0 ? `${pct.toFixed(1)}%` : '–';
-                    intensity = maxValue > 0 ? pct / maxValue : 0;
-                } else if (metric === 'col_pct') {
-                    const pct = colTotals.get(col) > 0 ? (count / colTotals.get(col)) * 100 : 0;
-                    displayValue = pct > 0 ? `${pct.toFixed(1)}%` : '–';
-                    intensity = maxValue > 0 ? pct / maxValue : 0;
-                } else {
-                    displayValue = count > 0 ? count.toLocaleString() : '–';
-                    intensity = maxValue > 0 ? count / maxValue : 0;
-                }
-                
-                const bgColor = getHeatmapColor(intensity);
-                const textColor = intensity > 0.5 ? '#ffffff' : 'var(--color-text-primary)';
-                
-                html += `<td class="crosstab-cell" style="background: ${bgColor}; color: ${textColor};" title="${count} responses">${displayValue}</td>`;
-            }
-            
-            // Row total
-            const rowTotal = rowTotals.get(row);
-            html += `<td class="crosstab-row-total">${rowTotal.toLocaleString()}</td>`;
-            html += '</tr>';
-        }
-        
-        // Column totals row
-        html += '<tr class="crosstab-totals-row">';
-        html += '<th class="crosstab-row-header">Total</th>';
-        for (const col of cols) {
-            html += `<td class="crosstab-col-total">${colTotals.get(col).toLocaleString()}</td>`;
-        }
-        html += `<td class="crosstab-grand-total">${grandTotal.toLocaleString()}</td>`;
-        html += '</tr>';
-        
-        html += '</tbody></table>';
-        
-        container.innerHTML = html;
+        renderCrosstabTable();
         
     } catch (error) {
         console.error('Crosstab error:', error);
         container.innerHTML = `<p class="error-text">Error: ${error.message}</p>`;
     }
+}
+
+function renderCrosstabTable() {
+    if (!crosstabData) return;
+    
+    const { rows, cols, matrix, rowTotals, colTotals, grandTotal, rowCol, colCol, metric } = crosstabData;
+    const container = document.getElementById('crosstab-results');
+    const columnLabels = getColumnLabel();
+    const wrapText = document.getElementById('crosstab-wrap-text').checked;
+    const wrapClass = wrapText ? ' wrap-text' : '';
+    
+    // Calculate values for sorting and display
+    const rowData = rows.map(row => {
+        const values = {};
+        for (const col of cols) {
+            const count = matrix.get(`${row}|||${col}`) || 0;
+            if (metric === 'row_pct') {
+                values[col] = rowTotals.get(row) > 0 ? (count / rowTotals.get(row)) * 100 : 0;
+            } else if (metric === 'col_pct') {
+                values[col] = colTotals.get(col) > 0 ? (count / colTotals.get(col)) * 100 : 0;
+            } else {
+                values[col] = count;
+            }
+        }
+        return { row, values, total: rowTotals.get(row) };
+    });
+    
+    // Sort rows
+    rowData.sort((a, b) => {
+        let aVal, bVal;
+        if (crosstabSortCol === '_total') {
+            aVal = a.total;
+            bVal = b.total;
+        } else {
+            aVal = a.values[crosstabSortCol] || 0;
+            bVal = b.values[crosstabSortCol] || 0;
+        }
+        return crosstabSortDir === 'desc' ? bVal - aVal : aVal - bVal;
+    });
+    
+    // Find max value for heatmap
+    let maxValue = 0;
+    for (const rd of rowData) {
+        for (const col of cols) {
+            maxValue = Math.max(maxValue, rd.values[col] || 0);
+        }
+    }
+    
+    // Build the table
+    let html = `<table class="crosstab-table${wrapClass}">`;
+    
+    // Header row with sortable columns
+    html += '<thead><tr>';
+    html += `<th class="crosstab-corner">${columnLabels[rowCol]} / ${columnLabels[colCol]}</th>`;
+    for (const col of cols) {
+        const displayCol = wrapText ? col : truncateText(col, 15);
+        const isActive = crosstabSortCol === col;
+        const sortIcon = isActive ? (crosstabSortDir === 'desc' ? ' ↓' : ' ↑') : '';
+        const activeClass = isActive ? ' sort-active' : '';
+        html += `<th class="crosstab-col-header crosstab-sortable${activeClass}" data-sort-col="${encodeURIComponent(col)}" title="Click to sort by ${escapeHtml(col)}">${escapeHtml(displayCol)}${sortIcon}</th>`;
+    }
+    const totalActive = crosstabSortCol === '_total';
+    const totalSortIcon = totalActive ? (crosstabSortDir === 'desc' ? ' ↓' : ' ↑') : '';
+    const totalActiveClass = totalActive ? ' sort-active' : '';
+    html += `<th class="crosstab-total-header crosstab-sortable${totalActiveClass}" data-sort-col="_total" title="Click to sort by total">Total${totalSortIcon}</th>`;
+    html += '</tr></thead>';
+    
+    // Data rows
+    html += '<tbody>';
+    for (const rd of rowData) {
+        html += '<tr>';
+        const displayRow = wrapText ? rd.row : truncateText(rd.row, 25);
+        html += `<th class="crosstab-row-header" title="${escapeHtml(rd.row)}">${escapeHtml(displayRow)}</th>`;
+        
+        for (const col of cols) {
+            const value = rd.values[col] || 0;
+            const count = matrix.get(`${rd.row}|||${col}`) || 0;
+            let displayValue;
+            
+            if (metric === 'row_pct' || metric === 'col_pct') {
+                displayValue = value > 0 ? `${value.toFixed(1)}%` : '–';
+            } else {
+                displayValue = value > 0 ? value.toLocaleString() : '–';
+            }
+            
+            const intensity = maxValue > 0 ? value / maxValue : 0;
+            const bgColor = getHeatmapColor(intensity);
+            const textColor = intensity > 0.5 ? '#ffffff' : 'var(--color-text-primary)';
+            
+            html += `<td class="crosstab-cell" style="background: ${bgColor}; color: ${textColor};" title="${count} responses">${displayValue}</td>`;
+        }
+        
+        html += `<td class="crosstab-row-total">${rd.total.toLocaleString()}</td>`;
+        html += '</tr>';
+    }
+    
+    // Column totals row
+    html += '<tr class="crosstab-totals-row">';
+    html += '<th class="crosstab-row-header">Total</th>';
+    for (const col of cols) {
+        html += `<td class="crosstab-col-total">${colTotals.get(col).toLocaleString()}</td>`;
+    }
+    html += `<td class="crosstab-grand-total">${grandTotal.toLocaleString()}</td>`;
+    html += '</tr>';
+    
+    html += '</tbody></table>';
+    
+    container.innerHTML = html;
+    
+    // Add click handlers for sorting
+    container.querySelectorAll('.crosstab-sortable').forEach(th => {
+        th.addEventListener('click', () => {
+            const col = decodeURIComponent(th.dataset.sortCol);
+            if (crosstabSortCol === col) {
+                // Toggle direction
+                crosstabSortDir = crosstabSortDir === 'desc' ? 'asc' : 'desc';
+            } else {
+                crosstabSortCol = col;
+                crosstabSortDir = 'desc';
+            }
+            renderCrosstabTable();
+        });
+    });
 }
 
 function getColumnLabel() {

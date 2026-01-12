@@ -874,6 +874,22 @@ body {
     text-overflow: ellipsis;
 }
 
+.crosstab-sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease;
+}
+
+.crosstab-sortable:hover {
+    background: var(--color-bg-card);
+    color: var(--color-text-primary);
+}
+
+.crosstab-sortable.sort-active {
+    color: var(--color-accent);
+    background: var(--color-accent-muted);
+}
+
 .crosstab-row-header {
     background: var(--color-bg-elevated);
     text-align: left !important;
