@@ -281,7 +281,9 @@ const chartConfig = {
     'chart-storage': { column: 'storage_environment', limit: 8 },
     'chart-architecture': { column: 'architecture_trend', limit: 8 },
     'chart-growth': { column: 'team_growth_2026', limit: 8 },
-    'chart-bottleneck': { column: 'biggest_bottleneck', limit: 8 }
+    'chart-bottleneck': { column: 'biggest_bottleneck', limit: 8 },
+    'chart-region': { column: 'region', limit: 8 },
+    'chart-modeling': { column: 'modeling_approach', limit: 8 }
 };
 
 async function updateCharts() {
