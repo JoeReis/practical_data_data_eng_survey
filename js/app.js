@@ -548,25 +548,30 @@ function initializeAboutModal() {
     const openBtn = document.getElementById('about-btn');
     const closeBtn = document.getElementById('close-modal');
     
-    openBtn.addEventListener('click', () => {
-        modal.hidden = false;
-    });
+    function openModal() {
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden'; // Prevent background scroll
+    }
     
-    closeBtn.addEventListener('click', () => {
-        modal.hidden = true;
-    });
+    function closeModal() {
+        modal.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+    
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
     
     // Close on backdrop click
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
-            modal.hidden = true;
+            closeModal();
         }
     });
     
     // Close on Escape key
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !modal.hidden) {
-            modal.hidden = true;
+        if (e.key === 'Escape' && modal.classList.contains('open')) {
+            closeModal();
         }
     });
 }
