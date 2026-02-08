@@ -1381,3 +1381,301 @@ body {
     animation: fadeIn 0.3s ease;
 }
 
+/* ===== Report Tab ===== */
+#report-tab {
+    display: none;
+    height: calc(100vh - 130px);
+    overflow-y: auto;
+}
+
+#report-tab.active {
+    display: block;
+}
+
+.report-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: var(--space-2xl) var(--space-lg);
+}
+
+.report-content {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2xl);
+}
+
+/* Report Header */
+.report-header {
+    text-align: center;
+    padding-bottom: var(--space-2xl);
+    margin-bottom: var(--space-2xl);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.report-series {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: var(--space-sm);
+}
+
+.report-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--color-accent), #a371f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: var(--space-xs);
+    letter-spacing: -0.02em;
+}
+
+.report-subtitle {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-lg);
+}
+
+.report-description {
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-md);
+}
+
+.report-date {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
+/* Report Sections */
+.report-section {
+    margin-bottom: var(--space-2xl);
+}
+
+.report-section:last-of-type {
+    margin-bottom: 0;
+}
+
+.report-section h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-accent);
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-sm);
+    border-bottom: 2px solid var(--color-accent-muted);
+}
+
+.report-section h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-top: var(--space-xl);
+    margin-bottom: var(--space-md);
+}
+
+.report-section h3:first-child {
+    margin-top: 0;
+}
+
+.report-section p {
+    color: var(--color-text-secondary);
+    line-height: 1.8;
+    margin-bottom: var(--space-md);
+}
+
+.report-section p:last-child {
+    margin-bottom: 0;
+}
+
+.report-section em {
+    color: var(--color-text-primary);
+    font-style: italic;
+}
+
+/* Key Findings Cards */
+.key-findings {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+    margin: var(--space-lg) 0;
+}
+
+.finding {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    text-align: center;
+}
+
+.finding-stat {
+    display: block;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--color-accent);
+    line-height: 1;
+    margin-bottom: var(--space-sm);
+}
+
+.finding-text {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+}
+
+/* Report Tables */
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: var(--space-lg) 0;
+    font-size: 0.875rem;
+}
+
+.report-table th,
+.report-table td {
+    padding: var(--space-sm) var(--space-md);
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.report-table th {
+    background: var(--color-bg-card);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+.report-table td {
+    color: var(--color-text-primary);
+}
+
+.report-table td:nth-child(2),
+.report-table td:nth-child(3),
+.report-table td:nth-child(4) {
+    text-align: center;
+    font-family: var(--font-mono);
+}
+
+.report-table th:nth-child(2),
+.report-table th:nth-child(3),
+.report-table th:nth-child(4) {
+    text-align: center;
+}
+
+.report-table tbody tr:hover td {
+    background: var(--color-bg-card);
+}
+
+/* Report Takeaways List */
+.report-takeaways {
+    list-style: none;
+    padding: 0;
+    counter-reset: takeaway;
+}
+
+.report-takeaways li {
+    position: relative;
+    padding-left: var(--space-2xl);
+    margin-bottom: var(--space-lg);
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+    counter-increment: takeaway;
+}
+
+.report-takeaways li::before {
+    content: counter(takeaway);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 28px;
+    height: 28px;
+    background: var(--color-accent-muted);
+    color: var(--color-accent);
+    border-radius: 50%;
+    font-weight: 600;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.report-takeaways li strong {
+    color: var(--color-text-primary);
+}
+
+/* Report Footer */
+.report-footer {
+    margin-top: var(--space-2xl);
+    padding-top: var(--space-xl);
+    border-top: 1px solid var(--color-border);
+    text-align: center;
+}
+
+.report-footer h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-md);
+}
+
+.report-footer p {
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    margin-bottom: var(--space-sm);
+}
+
+.report-footer a {
+    color: var(--color-accent);
+    text-decoration: none;
+}
+
+.report-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Report Responsive */
+@media (max-width: 768px) {
+    .report-container {
+        padding: var(--space-lg) var(--space-md);
+    }
+    
+    .report-content {
+        padding: var(--space-lg);
+    }
+    
+    .report-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .report-subtitle {
+        font-size: 1rem;
+    }
+    
+    .key-findings {
+        grid-template-columns: 1fr;
+    }
+    
+    .finding-stat {
+        font-size: 2rem;
+    }
+    
+    .report-table {
+        font-size: 0.8125rem;
+    }
+    
+    .report-table th,
+    .report-table td {
+        padding: var(--space-xs) var(--space-sm);
+    }
+}
+

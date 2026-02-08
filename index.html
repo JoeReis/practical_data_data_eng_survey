@@ -112,6 +112,7 @@
                     <button class="tab" data-tab="crosstab">Crosstab</button>
                     <button class="tab" data-tab="responses">Responses</button>
                     <button class="tab" data-tab="sql">SQL Query</button>
+                    <button class="tab" data-tab="report">Report</button>
                 </nav>
 
                 <!-- Chart Filter Pills -->
@@ -357,6 +358,448 @@ LIMIT 10;</textarea>
                                 <button class="example-query" data-query="SELECT storage_environment, architecture_trend, COUNT(*) as count FROM survey GROUP BY storage_environment, architecture_trend ORDER BY count DESC LIMIT 15;">Storage vs Architecture</button>
                             </div>
                         </details>
+                    </div>
+                </section>
+
+                <!-- Report Tab -->
+                <section id="report-tab" class="tab-content">
+                    <div class="report-container">
+                        <div class="report-content">
+                            <header class="report-header">
+                                <p class="report-series">THE 2026 Practical Data Community</p>
+                                <h1>STATE OF DATA ENGINEERING</h1>
+                                <p class="report-subtitle">SURVEY REPORT</p>
+                                <p class="report-description">A comprehensive survey of 1,101 data professionals<br>on tools, trends, challenges, and the future of the field</p>
+                                <p class="report-date">February 2026</p>
+                            </header>
+
+                            <section class="report-section">
+                                <h2>Executive Summary</h2>
+                                <p>The 2026 State of Data Engineering Survey provides an in-depth look at the current landscape of data engineering, based on responses from 1,101 data professionals across six continents. The survey was conducted from December 2025 to early January 2026 via the Practical Data community and LinkedIn, capturing insights from practitioners, managers, and architects across industries, including technology, healthcare, finance, and manufacturing.</p>
+                                
+                                <h3>Key Findings at a Glance</h3>
+                                <div class="key-findings">
+                                    <div class="finding">
+                                        <span class="finding-stat">82%</span>
+                                        <span class="finding-text">Data professionals using AI tools daily or more frequently</span>
+                                    </div>
+                                    <div class="finding">
+                                        <span class="finding-stat">25%</span>
+                                        <span class="finding-text">Cite legacy systems and technical debt as their biggest bottleneck</span>
+                                    </div>
+                                    <div class="finding">
+                                        <span class="finding-stat">42%</span>
+                                        <span class="finding-text">Expect their data teams to grow in 2026</span>
+                                    </div>
+                                    <div class="finding">
+                                        <span class="finding-stat">44%</span>
+                                        <span class="finding-text">Use cloud data warehouses as their primary storage/processing environment</span>
+                                    </div>
+                                </div>
+                                
+                                <p>The survey reveals a field in transition. While cloud data warehouses remain dominant, lakehouse architectures are gaining ground, particularly in Europe and Latin America. AI tools have become ubiquitous, with only 3.7% of respondents finding them unhelpful. However, organizational challenges, including poor leadership direction and unclear requirements, continue to outweigh technical obstacles as the primary impediments to success.</p>
+                                <p>Perhaps most notably, data modeling has emerged as a critical pain point. Nearly 90% of respondents report challenges with their modeling approach, with pressure to move fast and a lack of clear ownership topping the list. This finding aligns with strong demand for data modeling education, which ranks second among requested training topics, behind AI/LLM integration.</p>
+                            </section>
+
+                            <section class="report-section">
+                                <h2>Methodology</h2>
+                                
+                                <h3>Survey Design and Distribution</h3>
+                                <p>The survey consisted of 17 questions covering role demographics, technology stack, AI adoption, organizational challenges, and future outlook. Questions included single-select, multi-select, and open-text formats to capture both quantitative trends and qualitative insights.</p>
+                                <p>The survey was distributed through two primary channels: the Practical Data community (Substack and newsletter subscribers) and LinkedIn. Data collection occurred over a two-week period in late 2025.</p>
+                                
+                                <h3>Response Demographics</h3>
+                                <p>A total of 1,101 complete responses were received. The respondent pool skews toward experienced practitioners, with a significant representation of managers and directors, reflecting the distribution channels' reach.</p>
+                                
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Respondent Role</th>
+                                            <th>Count</th>
+                                            <th>Percentage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Data Engineer</td><td>423</td><td>38.4%</td></tr>
+                                        <tr><td>Manager / Director / VP</td><td>226</td><td>20.5%</td></tr>
+                                        <tr><td>Analytics Engineer</td><td>153</td><td>13.9%</td></tr>
+                                        <tr><td>Data Architect</td><td>131</td><td>11.9%</td></tr>
+                                        <tr><td>Software Engineer (data focus)</td><td>37</td><td>3.4%</td></tr>
+                                        <tr><td>Platform Engineer</td><td>18</td><td>1.6%</td></tr>
+                                        <tr><td>ML Engineer / MLOps</td><td>13</td><td>1.2%</td></tr>
+                                        <tr><td>AI Engineer</td><td>13</td><td>1.2%</td></tr>
+                                        <tr><td>Other</td><td>87</td><td>7.9%</td></tr>
+                                    </tbody>
+                                </table>
+                                
+                                <h3>Geographic Distribution</h3>
+                                <p>Responses came from six geographic regions, with North America and Europe comprising the majority of the sample.</p>
+                                
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Region</th>
+                                            <th>Count</th>
+                                            <th>Percentage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>United States / Canada</td><td>436</td><td>39.6%</td></tr>
+                                        <tr><td>Europe (EU / UK)</td><td>432</td><td>39.2%</td></tr>
+                                        <tr><td>Asia-Pacific</td><td>94</td><td>8.5%</td></tr>
+                                        <tr><td>Latin America</td><td>52</td><td>4.7%</td></tr>
+                                        <tr><td>Australia / New Zealand</td><td>52</td><td>4.7%</td></tr>
+                                        <tr><td>Middle East / Africa</td><td>28</td><td>2.5%</td></tr>
+                                    </tbody>
+                                </table>
+                                
+                                <h3>Organization Size</h3>
+                                <p>The sample represents a balanced distribution across organization sizes, from startups to large enterprises.</p>
+                                
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Organization Size</th>
+                                            <th>Count</th>
+                                            <th>Percentage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>10,000+ employees</td><td>229</td><td>20.8%</td></tr>
+                                        <tr><td>1,000-10,000 employees</td><td>311</td><td>28.2%</td></tr>
+                                        <tr><td>200-999 employees</td><td>231</td><td>21.0%</td></tr>
+                                        <tr><td>50-199 employees</td><td>156</td><td>14.2%</td></tr>
+                                        <tr><td>Under 50 employees</td><td>174</td><td>15.8%</td></tr>
+                                    </tbody>
+                                </table>
+                            </section>
+
+                            <section class="report-section">
+                                <h2>Infrastructure and Architecture</h2>
+                                
+                                <h3>Primary Storage and Processing Environment</h3>
+                                <p>Cloud data warehouses remain the dominant paradigm, used by 44% of respondents. However, lakehouse architectures have established a significant foothold at 27%, reflecting the maturation of technologies like Databricks, Apache Iceberg, Hudi, and Delta Lake.</p>
+                                
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Environment</th>
+                                            <th>Percentage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Cloud Data Warehouse (Snowflake, BigQuery, Redshift)</td><td>43.8%</td></tr>
+                                        <tr><td>Lakehouse (Databricks, Iceberg/Hudi/Delta)</td><td>26.8%</td></tr>
+                                        <tr><td>Mixed/Hybrid</td><td>11.7%</td></tr>
+                                        <tr><td>On-premises Data Warehouse</td><td>9.4%</td></tr>
+                                        <tr><td>Cloud PostgreSQL/MySQL</td><td>4.3%</td></tr>
+                                        <tr><td>Other</td><td>4.0%</td></tr>
+                                    </tbody>
+                                </table>
+                                
+                                <p>Regional variations are notable. North American organizations show stronger cloud data warehouse adoption (50%), while European respondents report more balanced adoption between warehouses (40%) and lakehouses (33%). Latin America shows the highest lakehouse adoption at 40%.</p>
+                                
+                                <h3>Orchestration Approaches</h3>
+                                <p>Orchestration remains fragmented, with Airflow (in various forms) leading but far from universal. A concerning 20.5% of respondents report having no orchestration or relying on ad-hoc approaches.</p>
+                                
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Orchestration Approach</th>
+                                            <th>Percentage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Cloud-native (Composer, MWAA, etc.)</td><td>24.4%</td></tr>
+                                        <tr><td>Self-managed Airflow</td><td>22.9%</td></tr>
+                                        <tr><td>No orchestration / Ad-hoc</td><td>20.5%</td></tr>
+                                        <tr><td>Dagster</td><td>6.2%</td></tr>
+                                        <tr><td>Prefect</td><td>1.3%</td></tr>
+                                        <tr><td>Other (Databricks Jobs, dbt, SSIS, etc.)</td><td>24.7%</td></tr>
+                                    </tbody>
+                                </table>
+                                
+                                <p>Dagster shows notably higher adoption in smaller organizations (11% in sub-50-employee companies) compared to enterprises (3% in 10,000+ employee organizations), suggesting it may be gaining traction as a modern alternative in greenfield environments.</p>
+                                
+                                <h3>Architectural Trends</h3>
+                                <p>When asked which architectural trend they are most aligned with, respondents preferred centralized approaches, though this varied significantly by organization size.</p>
+                                
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Architecture Trend</th>
+                                            <th>Overall</th>
+                                            <th>&lt;50 Emp.</th>
+                                            <th>10,000+ Emp.</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Centralized Warehouse</td><td>40.1%</td><td>43%</td><td>29%</td></tr>
+                                        <tr><td>Lakehouse</td><td>34.6%</td><td>29%</td><td>38%</td></tr>
+                                        <tr><td>Data Mesh / Federated</td><td>16.2%</td><td>10%</td><td>27%</td></tr>
+                                        <tr><td>Event-driven Architecture</td><td>6.8%</td><td>15%</td><td>4%</td></tr>
+                                    </tbody>
+                                </table>
+                                
+                                <p>Data mesh adoption nearly triples from startups (10%) to large enterprises (27%), reflecting the organizational complexity that drives federated ownership models. Conversely, smaller organizations favor centralized warehouses, likely due to simpler organizational structures and smaller team sizes.</p>
+                            </section>
+
+                            <section class="report-section">
+                                <h2>AI Tools and Adoption</h2>
+                                
+                                <h3>Personal AI Tool Usage</h3>
+                                <p>AI tools have achieved near-universal adoption among data professionals. A remarkable 82% of respondents use AI tools (such as ChatGPT, Claude, Cursor, or GitHub Copilot) daily or more frequently.</p>
+                                
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Usage Frequency</th>
+                                            <th>Percentage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Multiple times per day</td><td>54.0%</td></tr>
+                                        <tr><td>Daily</td><td>28.2%</td></tr>
+                                        <tr><td>Weekly</td><td>10.7%</td></tr>
+                                        <tr><td>Rarely</td><td>6.1%</td></tr>
+                                        <tr><td>Never</td><td>1.0%</td></tr>
+                                    </tbody>
+                                </table>
+                                
+                                <p>AI Engineers and ML Engineers show the highest adoption rates (92%+ daily usage), but even traditionally less technical roles like Data Architects report 79% daily usage. Only 3.7% of respondents reported not finding AI helpful for their work.</p>
+                                
+                                <h3>How AI Helps Most</h3>
+                                <p>Respondents were asked to select up to two areas where AI provides the most value. Code generation dominates, followed by documentation and pipeline debugging.</p>
+                                
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>AI Use Case</th>
+                                            <th>% Selected</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Writing Code (SQL, Python, etc.)</td><td>~82%</td></tr>
+                                        <tr><td>Documentation / Data Discovery</td><td>~56%</td></tr>
+                                        <tr><td>Pipeline Debugging</td><td>~29%</td></tr>
+                                        <tr><td>Architecture Design</td><td>~21%</td></tr>
+                                        <tr><td>Data Modeling</td><td>~13%</td></tr>
+                                        <tr><td>Governance / Quality Checks</td><td>~11%</td></tr>
+                                    </tbody>
+                                </table>
+                                
+                                <h3>Organizational AI Adoption</h3>
+                                <p>While individual AI tool usage is high, organizational AI adoption shows a different picture. Most organizations are still in the early stages of systematic AI integration.</p>
+                                
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Adoption Stage</th>
+                                            <th>Percentage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Using AI for tactical tasks</td><td>33.8%</td></tr>
+                                        <tr><td>Experimenting</td><td>30.5%</td></tr>
+                                        <tr><td>Building internal AI platforms</td><td>13.6%</td></tr>
+                                        <tr><td>No meaningful adoption yet</td><td>12.2%</td></tr>
+                                        <tr><td>AI embedded in most workflows</td><td>9.9%</td></tr>
+                                    </tbody>
+                                </table>
+                                
+                                <p>Tech companies lead in advanced AI adoption, with 31% either building AI platforms or embedding AI into workflows, compared to just 12% in the public sector. Organizations with higher AI adoption also show more optimistic team growth projections: 50% of those with embedded AI expect growth, versus 32% of those with no adoption.</p>
+                            </section>
+
+                            <section class="report-section">
+                                <h2>Data Modeling Practices</h2>
+                                
+                                <h3>Current Modeling Approaches</h3>
+                                <p>Data modeling approaches remain diverse, with no single methodology dominating. The Mixed approach, where modeling style depends on use case, is the most common response.</p>
+                                
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Modeling Approach</th>
+                                            <th>Percentage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Mixed (depends on use case)</td><td>36.8%</td></tr>
+                                        <tr><td>Kimball-style dimensional modeling</td><td>27.8%</td></tr>
+                                        <tr><td>Ad-hoc / tables added as needed</td><td>17.4%</td></tr>
+                                        <tr><td>Canonical/semantic models</td><td>5.4%</td></tr>
+                                        <tr><td>One Big Table</td><td>3.8%</td></tr>
+                                        <tr><td>Event-driven modeling</td><td>3.3%</td></tr>
+                                        <tr><td>Data Vault</td><td>3.3%</td></tr>
+                                    </tbody>
+                                </table>
+                                
+                                <p>Modeling approaches correlate with architectural choices. Organizations aligned with centralized warehouses show higher Kimball adoption (34%), while those pursuing data mesh favor mixed approaches (44%) and show lower ad-hoc modeling (11%).</p>
+                                
+                                <h3>Data Modeling Pain Points</h3>
+                                <p>Nearly 90% of respondents report at least one data modeling pain point, revealing this as a critical area of industry-wide struggle.</p>
+                                
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Pain Point</th>
+                                            <th>% Selected</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Pressure to move fast</td><td>59.3%</td></tr>
+                                        <tr><td>Lack of clear ownership</td><td>50.7%</td></tr>
+                                        <tr><td>Hard to maintain over time</td><td>39.2%</td></tr>
+                                        <tr><td>Tools do not support good modeling</td><td>18.7%</td></tr>
+                                        <tr><td>None / modeling is going well</td><td>11.3%</td></tr>
+                                        <tr><td>AI tools produce inconsistent schemas</td><td>4.3%</td></tr>
+                                    </tbody>
+                                </table>
+                                
+                                <p>The correlation between the modeling approach and operational health is striking. Organizations using ad-hoc modeling report the highest rates of firefighting (38%), while those with canonical/semantic models report the lowest (19%). This suggests that investment in thoughtful modeling approaches pays dividends in reduced operational burden.</p>
+                            </section>
+
+                            <section class="report-section">
+                                <h2>Organizational Challenges</h2>
+                                
+                                <h3>Biggest Bottlenecks</h3>
+                                <p>Respondents were asked to identify the single biggest bottleneck in their data organization. The results reveal that organizational and process issues outweigh purely technical challenges.</p>
+                                
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Bottleneck</th>
+                                            <th>Percentage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Legacy systems / technical debt</td><td>25.4%</td></tr>
+                                        <tr><td>Lack of leadership direction</td><td>21.3%</td></tr>
+                                        <tr><td>Poor requirements / upstream issues</td><td>18.8%</td></tr>
+                                        <tr><td>Talent / hiring challenges</td><td>11.4%</td></tr>
+                                        <tr><td>Data quality issues</td><td>10.1%</td></tr>
+                                        <tr><td>Compute costs</td><td>5.2%</td></tr>
+                                        <tr><td>Tool complexity</td><td>2.7%</td></tr>
+                                    </tbody>
+                                </table>
+                                
+                                <p>While legacy systems top the list, the combined weight of organizational challenges (leadership direction, requirements, and talent) exceeds technical debt. This finding aligns with themes in the open-text responses, in which respondents frequently emphasized that data engineering success is a people problem as much as a technology one.</p>
+                                
+                                <h3>Where Teams Spend Their Time</h3>
+                                <p>Respondents selected up to two areas where their teams spend the most time, revealing priorities and potential inefficiencies.</p>
+                                
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Activity</th>
+                                            <th>% Selected</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Data modeling / transformation</td><td>55.4%</td></tr>
+                                        <tr><td>Ingestion / pipelines</td><td>48.1%</td></tr>
+                                        <tr><td>Analytics / BI</td><td>34.2%</td></tr>
+                                        <tr><td>Data quality / reliability</td><td>34.0%</td></tr>
+                                        <tr><td>Fighting fires</td><td>26.2%</td></tr>
+                                        <tr><td>Infrastructure / platform work</td><td>25.1%</td></tr>
+                                        <tr><td>ML / AI</td><td>10.8%</td></tr>
+                                    </tbody>
+                                </table>
+                                
+                                <p>More than one in four teams (26.2%) report that fighting fires consumes significant time, representing substantial lost productivity across the industry.</p>
+                            </section>
+
+                            <section class="report-section">
+                                <h2>Team Outlook and Industry Sentiment</h2>
+                                
+                                <h3>Team Growth Expectations for 2026</h3>
+                                <p>The outlook for data teams is cautiously optimistic, with more respondents expecting growth than contraction.</p>
+                                
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Expectation</th>
+                                            <th>Percentage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Stay the same</td><td>43.7%</td></tr>
+                                        <tr><td>Grow</td><td>42.0%</td></tr>
+                                        <tr><td>Not sure</td><td>7.3%</td></tr>
+                                        <tr><td>Shrink</td><td>7.1%</td></tr>
+                                    </tbody>
+                                </table>
+                                
+                                <p>Growth expectations correlate with organizational context. Teams whose primary bottleneck is talent/hiring are most bullish (59% expect growth), while those struggling with leadership direction are most pessimistic (35% expect growth, 10% expect shrinkage).</p>
+                                
+                                <h3>Education and Training Priorities</h3>
+                                <p>Respondents were asked what topic they most want education or training on in the coming year.</p>
+                                
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Topic</th>
+                                            <th>Count</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>AI/LLM integration</td><td>235</td></tr>
+                                        <tr><td>Data modeling</td><td>211</td></tr>
+                                        <tr><td>Semantics / ontologies / knowledge graphs</td><td>209</td></tr>
+                                        <tr><td>Architecture patterns</td><td>180</td></tr>
+                                        <tr><td>Streaming / event-driven systems</td><td>94</td></tr>
+                                        <tr><td>Career growth / leadership</td><td>80</td></tr>
+                                        <tr><td>Reliability engineering</td><td>66</td></tr>
+                                    </tbody>
+                                </table>
+                                
+                                <p>The strong demand for semantics, ontologies, and knowledge graphs, combined with the earlier finding that only 5.4% currently use canonical/semantic models, suggests an emerging area of interest with significant room for adoption.</p>
+                            </section>
+
+                            <section class="report-section">
+                                <h2>Industry Voices: What Practitioners Wish Others Understood</h2>
+                                <p>Respondents were asked: What is one thing you wish the wider industry understood about data engineering? The open-text responses reveal several recurring themes.</p>
+                                
+                                <h3>It Is a People Problem</h3>
+                                <p>Multiple respondents emphasized that data engineering challenges are fundamentally organizational rather than technical: <em>"Data is a team sport; it requires sponsorship and alignment across both business and technical users to be fully successful."</em> Another simply noted: <em>"It is all a people problem."</em></p>
+                                
+                                <h3>Foundations Matter More Than Tools</h3>
+                                <p>A consistent theme emerged around the importance of fundamentals over tooling: <em>"Data Engineering is not about the tools you use, but most jobs seem to require practice with tools."</em> Respondents expressed frustration with tool-focused discourse: <em>"I would like to see more people talking about foundations; more articles and talks about timeless tools."</em></p>
+                                
+                                <h3>Data Engineering Is Not Just Old Software Engineering</h3>
+                                <p>Several respondents pushed back on the perception that data engineering is simply software engineering with different data: <em>"It is not just software engineering from ten years ago but has its own challenges that software engineers do not need to worry about."</em></p>
+                                
+                                <h3>Quality and Governance Cannot Be Afterthoughts</h3>
+                                <p>Data quality emerged as a persistent concern: <em>"Data quality cannot be fixed by one person, team, or department, no matter how hard you shout."</em> Respondents emphasized the need for shift-left approaches: <em>"Data quality starts left."</em></p>
+                                
+                                <h3>It Takes Time</h3>
+                                <p>Finally, practitioners expressed frustration with unrealistic expectations about timelines. As one respondent put it succinctly: <em>"It is not a project. It is a program that needs to be treated as a capital investment."</em></p>
+                            </section>
+
+                            <section class="report-section">
+                                <h2>Conclusions and Implications</h2>
+                                
+                                <h3>Key Takeaways</h3>
+                                <ol class="report-takeaways">
+                                    <li><strong>AI adoption is no longer optional.</strong> With 82% of practitioners using AI tools daily, organizations that do not enable AI-assisted development are putting their teams at a competitive disadvantage.</li>
+                                    <li><strong>Organizational challenges outweigh technical ones.</strong> Leadership direction, clear requirements, and proper ownership are cited as bigger obstacles than tool complexity or compute costs.</li>
+                                    <li><strong>Data modeling is in crisis.</strong> Nearly 90% of respondents report modeling pain points, with pressure to move fast and lack of ownership leading the list. Organizations with disciplined modeling approaches spend less time firefighting.</li>
+                                    <li><strong>Architecture is converging around warehouse and lakehouse.</strong> Together, these paradigms represent over 70% of primary environments, with data mesh gaining traction primarily in large enterprises.</li>
+                                    <li><strong>Team growth outlook is cautiously positive.</strong> With 42% expecting growth and only 7% expecting shrinkage, the field remains healthy despite macroeconomic uncertainties.</li>
+                                </ol>
+                                
+                                <h3>Looking Ahead</h3>
+                                <p>The data engineering field in 2026 faces a dual challenge: rapidly integrating AI capabilities while addressing longstanding organizational and methodological gaps. The strong demand for education in data modeling, semantic layers, and architecture patterns suggests that practitioners recognize these gaps and are seeking to address them.</p>
+                                <p>Organizations that invest in foundational practices, including thoughtful data modeling, clear ownership structures, and leadership alignment, will be better positioned to capitalize on AI capabilities. Those who prioritize speed over sustainability may find themselves trapped in cycles of technical debt and firefighting.</p>
+                                <p>The message from the community is clear: data engineering success requires treating data as a strategic asset worthy of sustained investment, not a tactical problem to be solved with the next tool or platform migration.</p>
+                            </section>
+
+                            <footer class="report-footer">
+                                <h3>About This Report</h3>
+                                <p>This survey was conducted and published on behalf of the Practical Data Community.<br>No vendors or other commercial interests influenced this survey. This is a grassroots initiative.</p>
+                                <p>For questions or media inquiries, contact <a href="mailto:joe@joereismedia.com">joe@joereismedia.com</a></p>
+                            </footer>
+                        </div>
                     </div>
                 </section>
             </div>
