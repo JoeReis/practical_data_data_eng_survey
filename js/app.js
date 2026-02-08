@@ -69,6 +69,7 @@ async function init() {
         initializeThemeToggle();
         initializeChartExport();
         initializeReportToc();
+        initializeScrollToTop();
         
         // Hide loading overlay
         document.getElementById('loading-overlay').classList.add('hidden');
@@ -409,7 +410,14 @@ async function renderBarChart(chartId, column, whereClause, limit, totalFiltered
         const rows = result.toArray();
         
         if (rows.length === 0) {
-            container.innerHTML = '<p class="placeholder-text">No data for current filters</p>';
+            container.innerHTML = `
+                <div class="empty-state">
+                    <svg class="empty-state-icon" width="32" height="32" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
+                        <path d="M4 4h8v1H4V4zm0 3h8v1H4V7zm0 3h5v1H4v-1z"/>
+                    </svg>
+                    <p>No data matches these filters</p>
+                </div>`;
             return;
         }
         
@@ -648,7 +656,15 @@ function showQueryResults({ columns, rows, error }) {
     }
     
     if (rows.length === 0) {
-        container.innerHTML = '<p class="placeholder-text">Query returned no results</p>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <svg class="empty-state-icon" width="32" height="32" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zM5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/>
+                    <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z"/>
+                </svg>
+                <p>Query returned no results</p>
+                <span class="empty-state-hint">Try adjusting your query or filters</span>
+            </div>`;
         exportBtn.disabled = true;
         return;
     }
@@ -808,22 +824,7 @@ function initializeShareButton() {
         
         try {
             await navigator.clipboard.writeText(url);
-            
-            // Show feedback
-            const originalText = shareBtn.innerHTML;
-            shareBtn.innerHTML = `
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
-                </svg>
-                Copied!
-            `;
-            shareBtn.classList.add('btn-success');
-            
-            setTimeout(() => {
-                shareBtn.innerHTML = originalText;
-                shareBtn.classList.remove('btn-success');
-            }, 2000);
-            
+            showToast('Link copied to clipboard!', 'success');
         } catch (err) {
             // Fallback: show URL in prompt
             prompt('Copy this link:', url);
@@ -985,7 +986,15 @@ async function updateCrosstab() {
     const container = document.getElementById('crosstab-results');
     
     if (rowCol === colCol) {
-        container.innerHTML = '<p class="placeholder-text">Please select different dimensions for rows and columns</p>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <svg class="empty-state-icon" width="32" height="32" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/>
+                    <path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/>
+                </svg>
+                <p>Select different dimensions</p>
+                <span class="empty-state-hint">Row and column dimensions must be different to create a crosstab</span>
+            </div>`;
         return;
     }
     
@@ -1059,7 +1068,14 @@ async function updateCrosstab() {
         const data = result.toArray();
         
         if (data.length === 0) {
-            container.innerHTML = '<p class="placeholder-text">No data for current filters</p>';
+            container.innerHTML = `
+                <div class="empty-state">
+                    <svg class="empty-state-icon" width="32" height="32" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm15 2h-4v3h4V4zm0 4h-4v3h4V8zm0 4h-4v3h3a1 1 0 0 0 1-1v-2zm-5 3v-3H6v3h4zm-5 0v-3H1v2a1 1 0 0 0 1 1h3zm-4-4h4V8H1v3zm0-4h4V4H1v3zm5-3v3h4V4H6zm4 4H6v3h4V8z"/>
+                    </svg>
+                    <p>No data matches these filters</p>
+                    <span class="empty-state-hint">Try removing some filters to see more results</span>
+                </div>`;
             return;
         }
         
@@ -1377,7 +1393,15 @@ async function updateResponses() {
         document.getElementById('responses-next').disabled = (responsesPage + 1) * responsesPerPage >= responsesTotalCount;
         
         if (rows.length === 0) {
-            container.innerHTML = '<p class="placeholder-text">No responses match current filters</p>';
+            container.innerHTML = `
+                <div class="empty-state">
+                    <svg class="empty-state-icon" width="32" height="32" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                        <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+                    </svg>
+                    <p>No responses match these filters</p>
+                    <span class="empty-state-hint">Try adjusting or clearing your filters</span>
+                </div>`;
             return;
         }
         
@@ -1471,7 +1495,7 @@ async function exportFilteredCsv() {
         const rows = result.toArray();
         
         if (rows.length === 0) {
-            alert('No data to export with current filters');
+            showToast('No data to export with current filters', 'error');
             return;
         }
         
@@ -1508,6 +1532,76 @@ async function exportFilteredCsv() {
         console.error('Export error:', error);
         alert('Error exporting data: ' + error.message);
     }
+}
+
+// ===== Toast Notifications =====
+function showToast(message, type = 'default', duration = 3000) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    let icon = '';
+    if (type === 'success') {
+        icon = `<svg class="toast-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+        </svg>`;
+    } else if (type === 'error') {
+        icon = `<svg class="toast-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+            <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+        </svg>`;
+    }
+    
+    toast.innerHTML = `${icon}<span>${message}</span>`;
+    container.appendChild(toast);
+    
+    // Auto remove
+    setTimeout(() => {
+        toast.classList.add('hiding');
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+
+// ===== Scroll to Top =====
+function initializeScrollToTop() {
+    const btn = document.getElementById('scroll-to-top');
+    if (!btn) return;
+    
+    // Find the scrollable container (report tab or main content)
+    const scrollContainers = [
+        document.getElementById('report-tab'),
+        document.getElementById('charts-tab'),
+        document.querySelector('.content-area')
+    ];
+    
+    // Show/hide based on scroll position
+    const checkScroll = () => {
+        const activeContent = document.querySelector('.tab-content.active');
+        if (activeContent && activeContent.scrollTop > 300) {
+            btn.classList.add('visible');
+        } else {
+            btn.classList.remove('visible');
+        }
+    };
+    
+    // Add scroll listeners to tab contents
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.addEventListener('scroll', checkScroll);
+    });
+    
+    // Also listen on window for report tab which might scroll differently
+    window.addEventListener('scroll', checkScroll);
+    
+    // Scroll to top on click
+    btn.addEventListener('click', () => {
+        const activeContent = document.querySelector('.tab-content.active');
+        if (activeContent) {
+            activeContent.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
 }
 
 // ===== Report TOC Scroll Spy =====

@@ -60,14 +60,14 @@
                         <path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1.002 1.002 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4.018 4.018 0 0 1-.128-1.287z"/>
                         <path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243L6.586 4.672z"/>
                     </svg>
-                    Share
+                    <span class="btn-text">Share</span>
                 </button>
                 <button id="about-btn" class="btn btn-ghost" title="About this survey">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                         <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
                         <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
                     </svg>
-                    About
+                    <span class="btn-text">About</span>
                 </button>
                 <button id="download-csv" class="btn btn-secondary" title="Download full dataset">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -82,10 +82,30 @@
         <!-- Loading State -->
         <div id="loading-overlay" class="loading-overlay">
             <div class="loading-content">
-                <div class="spinner"></div>
-                <p>Loading DuckDB...</p>
+                <div class="loading-logo">
+                    <svg width="48" height="48" viewBox="0 0 32 32">
+                        <rect width="32" height="32" rx="6" fill="var(--color-bg-card)"/>
+                        <rect class="loading-bar loading-bar-1" x="5" y="18" width="5" height="9" rx="1" fill="var(--color-accent)"/>
+                        <rect class="loading-bar loading-bar-2" x="13" y="12" width="5" height="15" rx="1" fill="var(--color-accent)"/>
+                        <rect class="loading-bar loading-bar-3" x="21" y="5" width="5" height="22" rx="1" fill="var(--color-accent)"/>
+                    </svg>
+                </div>
+                <p class="loading-text">Loading survey data...</p>
+                <div class="loading-progress">
+                    <div class="loading-progress-bar"></div>
+                </div>
             </div>
         </div>
+
+        <!-- Toast Container -->
+        <div id="toast-container" class="toast-container"></div>
+
+        <!-- Scroll to Top Button -->
+        <button id="scroll-to-top" class="scroll-to-top" aria-label="Scroll to top">
+            <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z"/>
+            </svg>
+        </button>
 
         <!-- Main Content -->
         <main class="main-content">
