@@ -235,6 +235,14 @@ body {
     overflow: hidden;
 }
 
+.main-content.no-filter-panel {
+    grid-template-columns: 1fr;
+}
+
+.filter-panel.hidden-for-tab {
+    display: none;
+}
+
 /* ===== Filter Panel ===== */
 .filter-panel {
     background: var(--color-bg-elevated);

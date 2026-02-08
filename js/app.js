@@ -58,6 +58,7 @@ async function init() {
         
         await updateCharts();
         initializeTabs();
+        initializeChartMetricToggle();
         initializeSqlEditor();
         initializeCrosstab();
         initializeResponses();
@@ -472,8 +473,14 @@ async function renderBarChart(chartId, column, whereClause, limit, totalFiltered
 }
 
 // ===== Tab Navigation =====
+// Tabs that should show the filter panel
+const TABS_WITH_FILTERS = ['charts', 'crosstab'];
+
 function initializeTabs() {
     const tabs = document.querySelectorAll('.tab');
+    
+    // Set initial filter panel state based on active tab
+    updateFilterPanelVisibility();
     
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
@@ -488,11 +495,34 @@ function initializeTabs() {
             });
             document.getElementById(targetId).classList.add('active');
             
+            // Update filter panel visibility
+            updateFilterPanelVisibility();
+            
             // Update URL
             updateUrlState();
         });
     });
+}
+
+function updateFilterPanelVisibility() {
+    const activeTab = document.querySelector('.tab.active');
+    const filterPanel = document.querySelector('.filter-panel');
+    const mainContent = document.querySelector('.main-content');
     
+    if (!activeTab || !filterPanel) return;
+    
+    const showFilters = TABS_WITH_FILTERS.includes(activeTab.dataset.tab);
+    
+    if (showFilters) {
+        filterPanel.classList.remove('hidden-for-tab');
+        mainContent.classList.remove('no-filter-panel');
+    } else {
+        filterPanel.classList.add('hidden-for-tab');
+        mainContent.classList.add('no-filter-panel');
+    }
+}
+
+function initializeChartMetricToggle() {
     // Chart metric toggle (count vs percent)
     const metricBtns = document.querySelectorAll('.metric-btn');
     metricBtns.forEach(btn => {
