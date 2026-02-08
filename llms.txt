@@ -1,0 +1,27 @@
+# 2026 State of Data Engineering Survey
+
+> The 2026 State of Data Engineering Survey is an interactive report and dataset from 1,101 data professionals on tools, trends, challenges, and the future of data engineering. Conducted in late 2025 by the Practical Data community; no vendors or commercial interests influenced the survey.
+
+This site provides the full survey report, key findings, methodology, and an interactive explorer. The explorer lets users filter and slice the data by role, organization size, industry, region, and AI usage; run custom SQL queries against the dataset (DuckDB-WASM); view cross-tabulations; and browse or export individual responses.
+
+Key topics covered in the survey and report:
+- AI adoption (personal and organizational)
+- Data modeling practices and pain points
+- Infrastructure and architecture (warehouses, lakehouses, orchestration)
+- Organizational bottlenecks (leadership, requirements, technical debt)
+- Team growth expectations and education priorities
+- Open-ended themes from practitioners (“industry voices”)
+
+The dataset is 1,101 complete responses. Columns include: role, org_size, industry, region, team_focus, storage_environment, orchestration, ai_usage_frequency, ai_helps_with, ai_adoption, modeling_approach, modeling_pain_points, architecture_trend, biggest_bottleneck, team_growth_2026, education_topic, industry_wish, timestamp.
+
+## Main
+
+- [Survey Explorer](index.html): Interactive report and data explorer (Report tab with full narrative, Charts, Crosstab, Responses, SQL Query). Start here for the written report and to explore the data.
+
+## Data
+
+- [Survey data (CSV)](data/survey.csv): Full dataset of 1,101 responses; all columns. Suitable for analysis, citations, and fact-checking.
+
+## Optional
+
+- [README](README.md): Project and repository overview.
