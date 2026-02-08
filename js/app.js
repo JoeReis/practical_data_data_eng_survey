@@ -1624,25 +1624,37 @@ function initializeReportToc() {
         });
     });
     
-    // Scroll spy
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const id = entry.target.getAttribute('id');
-                tocLinks.forEach(link => {
-                    link.classList.remove('active');
-                    if (link.getAttribute('href') === `#${id}`) {
-                        link.classList.add('active');
-                    }
-                });
+    // Scroll spy: prefer the topmost visible section so Introduction wins when at top
+    const sectionIds = Array.from(sections).map(s => s.getAttribute('id'));
+    const intersectingIds = new Set();
+
+    const setActiveFromIntersecting = () => {
+        const ordered = sectionIds.filter(id => intersectingIds.has(id));
+        const activeId = ordered[0] || 'section-intro'; // default to Introduction
+        tocLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${activeId}`) {
+                link.classList.add('active');
             }
         });
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const id = entry.target.getAttribute('id');
+            if (entry.isIntersecting) {
+                intersectingIds.add(id);
+            } else {
+                intersectingIds.delete(id);
+            }
+        });
+        setActiveFromIntersecting();
     }, {
         root: reportTab,
-        rootMargin: '-20% 0px -70% 0px',
+        rootMargin: '-15% 0px -70% 0px',
         threshold: 0
     });
-    
+
     sections.forEach(section => observer.observe(section));
 }
 
