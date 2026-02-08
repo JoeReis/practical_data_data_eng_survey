@@ -108,18 +108,18 @@
             <div class="content-area">
                 <!-- Tab Navigation -->
                 <nav class="tabs">
-                    <button class="tab active" data-tab="charts">Charts</button>
+                    <button class="tab" data-tab="charts">Charts</button>
                     <button class="tab" data-tab="crosstab">Crosstab</button>
                     <button class="tab" data-tab="responses">Responses</button>
                     <button class="tab" data-tab="sql">SQL Query</button>
-                    <button class="tab" data-tab="report">Report</button>
+                    <button class="tab active" data-tab="report">Report</button>
                 </nav>
 
                 <!-- Chart Filter Pills -->
                 <div id="chart-filter-pills" class="chart-filter-pills"></div>
 
                 <!-- Charts Tab -->
-                <section id="charts-tab" class="tab-content active">
+                <section id="charts-tab" class="tab-content">
                     <div class="charts-controls">
                         <div class="charts-metric-toggle">
                             <span class="toggle-label">Show:</span>
@@ -362,8 +362,30 @@ LIMIT 10;</textarea>
                 </section>
 
                 <!-- Report Tab -->
-                <section id="report-tab" class="tab-content">
+                <section id="report-tab" class="tab-content active">
                     <div class="report-container">
+                        <!-- Interactive Features Callout -->
+                        <div class="interactive-callout">
+                            <div class="callout-icon">
+                                <svg width="24" height="24" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M4 11a1 1 0 1 1 2 0v1a1 1 0 1 1-2 0v-1zm6-4a1 1 0 1 1 2 0v5a1 1 0 1 1-2 0V7zM7 9a1 1 0 0 1 2 0v3a1 1 0 1 1-2 0V9z"/>
+                                    <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                                    <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+                                </svg>
+                            </div>
+                            <div class="callout-content">
+                                <h3>Explore the Data Yourself</h3>
+                                <p>This survey explorer includes interactive tools to dive deeper into the findings:</p>
+                                <ul class="callout-features">
+                                    <li><strong>Charts</strong> — Filter and visualize responses by role, region, org size, and more</li>
+                                    <li><strong>Crosstab</strong> — Cross-tabulate any two dimensions to discover patterns</li>
+                                    <li><strong>Responses</strong> — Browse individual survey responses with open-ended answers</li>
+                                    <li><strong>SQL Query</strong> — Run custom SQL queries directly against the dataset using DuckDB</li>
+                                </ul>
+                                <p class="callout-hint">Use the tabs above to explore, or read the full report below.</p>
+                            </div>
+                        </div>
+
                         <div class="report-content">
                             <header class="report-header">
                                 <p class="report-series">THE 2026 Practical Data Community</p>
