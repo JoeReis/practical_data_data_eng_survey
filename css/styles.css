@@ -335,6 +335,13 @@ body {
     padding: var(--space-md) var(--space-lg);
     background: var(--color-bg-elevated);
     border-bottom: 1px solid var(--color-border);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+    display: none;
 }
 
 .tab {
@@ -348,6 +355,11 @@ body {
     border-radius: var(--radius-md);
     cursor: pointer;
     transition: all 0.15s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
 }
 
 .tab:hover {
@@ -1377,6 +1389,10 @@ body {
         animation: slideIn 0.2s ease;
     }
     
+    .filter-panel.hidden-for-tab {
+        display: none !important;
+    }
+    
     @keyframes slideIn {
         from { transform: translateX(-100%); }
         to { transform: translateX(0); }
@@ -1409,15 +1425,72 @@ body {
     .subtitle {
         font-size: 0.75rem;
     }
+    
+    /* Tables scroll horizontally on mobile */
+    .crosstab-table-wrapper,
+    .responses-table-wrapper,
+    .sql-results {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .results-table,
+    .crosstab-table,
+    .responses-table {
+        min-width: 600px;
+    }
 }
 
 @media (max-width: 480px) {
     .header {
         padding: var(--space-sm) var(--space-md);
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+    }
+    
+    .header-left {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .header-content h1 {
+        font-size: 1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     .header-actions {
+        display: flex;
+        gap: var(--space-xs);
+    }
+    
+    .header-actions .btn {
+        padding: var(--space-xs);
+    }
+    
+    .header-actions .btn span,
+    .header-actions #about-btn span:last-child,
+    .header-actions #share-btn span:last-child {
         display: none;
+    }
+    
+    /* Hide text labels on mobile, show only icons */
+    #about-btn, #share-btn, #theme-toggle {
+        padding: var(--space-sm);
+    }
+    
+    #download-csv {
+        display: none;
+    }
+    
+    .tabs {
+        padding: var(--space-sm) var(--space-md);
+    }
+    
+    .tab {
+        padding: var(--space-sm) var(--space-md);
+        font-size: 0.8125rem;
     }
     
     #charts-tab {
@@ -1426,6 +1499,124 @@ body {
     
     .chart-card {
         padding: var(--space-md);
+    }
+    
+    .chart-bar-row {
+        grid-template-columns: 100px 1fr 35px;
+        gap: var(--space-sm);
+    }
+    
+    .chart-bar-label {
+        font-size: 0.75rem;
+    }
+    
+    .chart-bar-value {
+        font-size: 0.75rem;
+    }
+    
+    /* Report mobile styles */
+    .report-layout {
+        padding: var(--space-md);
+    }
+    
+    .report-content {
+        padding: var(--space-md);
+    }
+    
+    .report-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .report-section h2 {
+        font-size: 1.25rem;
+    }
+    
+    .report-section h3 {
+        font-size: 1rem;
+    }
+    
+    .report-section p {
+        font-size: 0.9375rem;
+        line-height: 1.7;
+    }
+    
+    .key-findings {
+        grid-template-columns: 1fr;
+    }
+    
+    .finding-stat {
+        font-size: 2rem;
+    }
+    
+    .report-table {
+        font-size: 0.75rem;
+    }
+    
+    .report-table th,
+    .report-table td {
+        padding: var(--space-xs) var(--space-sm);
+    }
+    
+    .author-intro h2 {
+        font-size: 1.25rem;
+    }
+    
+    .interactive-callout {
+        flex-direction: column;
+        padding: var(--space-md);
+    }
+    
+    .callout-features {
+        grid-template-columns: 1fr;
+    }
+    
+    /* SQL tab mobile */
+    .sql-container {
+        grid-template-rows: auto auto 1fr;
+    }
+    
+    .CodeMirror {
+        height: 120px !important;
+    }
+    
+    .sql-help {
+        padding: var(--space-sm) var(--space-md);
+    }
+    
+    /* Crosstab controls */
+    .crosstab-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .crosstab-control-group {
+        width: 100%;
+    }
+    
+    .crosstab-control-group .filter-select {
+        width: 100%;
+        min-width: unset;
+    }
+    
+    /* Responses tab */
+    .responses-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .responses-controls {
+        width: 100%;
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+    
+    .responses-toggle {
+        width: 100%;
+    }
+    
+    #export-filtered-csv {
+        width: 100%;
+        justify-content: center;
     }
 }
 
