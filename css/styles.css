@@ -485,6 +485,7 @@ body {
 /* ===== Tabs ===== */
 .tabs {
     display: flex;
+    justify-content: center;
     gap: var(--space-xs);
     padding: var(--space-md) var(--space-lg);
     background: var(--color-bg-elevated);
