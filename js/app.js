@@ -482,7 +482,7 @@ async function renderBarChart(chartId, column, whereClause, limit, totalFiltered
 
 // ===== Tab Navigation =====
 // Tabs that should show the filter panel
-const TABS_WITH_FILTERS = ['charts', 'crosstab'];
+const TABS_WITH_FILTERS = ['charts', 'crosstab', 'responses'];
 
 function initializeTabs() {
     const tabs = document.querySelectorAll('.tab');
