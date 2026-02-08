@@ -3,7 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 Practical Data Community State of Data Engineering Survey Explorer</title>
+    <title>2026 State of Data Engineering Survey | Practical Data Community</title>
+    <meta name="description" content="Insights from 1,101 data professionals on AI adoption, data modeling challenges, organizational bottlenecks, and the future of data engineering.">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="2026 State of Data Engineering Survey">
+    <meta property="og:description" content="Insights from 1,101 data professionals on AI adoption, data modeling challenges, and the future of data engineering. Explore the interactive data.">
+    <meta property="og:image" content="https://thepracticaldata.com/survey/og-image.png">
+    <meta property="og:url" content="https://thepracticaldata.com/survey/">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="2026 State of Data Engineering Survey">
+    <meta name="twitter:description" content="Insights from 1,101 data professionals on AI adoption, data modeling challenges, and the future of data engineering.">
+    <meta name="twitter:image" content="https://thepracticaldata.com/survey/og-image.png">
+    
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,6 +47,21 @@
                 </div>
             </div>
             <div class="header-actions">
+                <button id="theme-toggle" class="btn btn-ghost" title="Toggle dark/light mode">
+                    <svg id="theme-icon-dark" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
+                    </svg>
+                    <svg id="theme-icon-light" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="display: none;">
+                        <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+                    </svg>
+                </button>
+                <button id="share-btn" class="btn btn-ghost" title="Copy shareable link">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1.002 1.002 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4.018 4.018 0 0 1-.128-1.287z"/>
+                        <path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243L6.586 4.672z"/>
+                    </svg>
+                    Share
+                </button>
                 <button id="about-btn" class="btn btn-ghost" title="About this survey">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                         <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
@@ -363,6 +396,24 @@ LIMIT 10;</textarea>
 
                 <!-- Report Tab -->
                 <section id="report-tab" class="tab-content active">
+                    <div class="report-layout">
+                        <!-- Table of Contents -->
+                        <nav class="report-toc">
+                            <div class="toc-header">Contents</div>
+                            <ul class="toc-list">
+                                <li><a href="#section-intro" class="toc-link active">Introduction</a></li>
+                                <li><a href="#section-executive" class="toc-link">Executive Summary</a></li>
+                                <li><a href="#section-methodology" class="toc-link">Methodology</a></li>
+                                <li><a href="#section-infrastructure" class="toc-link">Infrastructure</a></li>
+                                <li><a href="#section-ai" class="toc-link">AI Adoption</a></li>
+                                <li><a href="#section-modeling" class="toc-link">Data Modeling</a></li>
+                                <li><a href="#section-challenges" class="toc-link">Challenges</a></li>
+                                <li><a href="#section-outlook" class="toc-link">Team Outlook</a></li>
+                                <li><a href="#section-voices" class="toc-link">Industry Voices</a></li>
+                                <li><a href="#section-conclusions" class="toc-link">Conclusions</a></li>
+                            </ul>
+                        </nav>
+
                     <div class="report-container">
                         <!-- Interactive Features Callout -->
                         <div class="interactive-callout">
@@ -388,7 +439,7 @@ LIMIT 10;</textarea>
 
                         <div class="report-content">
                             <!-- Author Introduction -->
-                            <section class="author-intro">
+                            <section id="section-intro" class="author-intro">
                                 <h2>Welcome to the 2026 State of Data Engineering Survey.</h2>
                                 <p>In late 2025, I asked this community to share how you actually work. Not the conference-talk version, but the real one with hard earned scar tissue. What tools you use. What slows you down. What keeps you up at night. 1,101 of you responded (thanks to the last person who tipped it past 1,100).</p>
                                 <p>The findings may or may not surprise anyone who's been in the trenches. I found myself surprised by some of the results.</p>
@@ -408,7 +459,7 @@ LIMIT 10;</textarea>
                                 <p class="report-date">February 2026</p>
                             </header>
 
-                            <section class="report-section">
+                            <section id="section-executive" class="report-section">
                                 <h2>Executive Summary</h2>
                                 <p>The 2026 State of Data Engineering Survey provides an in-depth look at the current landscape of data engineering, based on responses from 1,101 data professionals across six continents. The survey was conducted from December 2025 to early January 2026 via the Practical Data community and LinkedIn, capturing insights from practitioners, managers, and architects across industries, including technology, healthcare, finance, and manufacturing.</p>
                                 
@@ -436,7 +487,7 @@ LIMIT 10;</textarea>
                                 <p>Perhaps most notably, data modeling has emerged as a critical pain point. Nearly 90% of respondents report challenges with their modeling approach, with pressure to move fast and a lack of clear ownership topping the list. This finding aligns with strong demand for data modeling education, which ranks second among requested training topics, behind AI/LLM integration.</p>
                             </section>
 
-                            <section class="report-section">
+                            <section id="section-methodology" class="report-section">
                                 <h2>Methodology</h2>
                                 
                                 <h3>Survey Design and Distribution</h3>
@@ -509,7 +560,7 @@ LIMIT 10;</textarea>
                                 </table>
                             </section>
 
-                            <section class="report-section">
+                            <section id="section-infrastructure" class="report-section">
                                 <h2>Infrastructure and Architecture</h2>
                                 
                                 <h3>Primary Storage and Processing Environment</h3>
@@ -579,7 +630,7 @@ LIMIT 10;</textarea>
                                 <p>Data mesh adoption nearly triples from startups (10%) to large enterprises (27%), reflecting the organizational complexity that drives federated ownership models. Conversely, smaller organizations favor centralized warehouses, likely due to simpler organizational structures and smaller team sizes.</p>
                             </section>
 
-                            <section class="report-section">
+                            <section id="section-ai" class="report-section">
                                 <h2>AI Tools and Adoption</h2>
                                 
                                 <h3>Personal AI Tool Usage</h3>
@@ -645,7 +696,7 @@ LIMIT 10;</textarea>
                                 <p>Tech companies lead in advanced AI adoption, with 31% either building AI platforms or embedding AI into workflows, compared to just 12% in the public sector. Organizations with higher AI adoption also show more optimistic team growth projections: 50% of those with embedded AI expect growth, versus 32% of those with no adoption.</p>
                             </section>
 
-                            <section class="report-section">
+                            <section id="section-modeling" class="report-section">
                                 <h2>Data Modeling Practices</h2>
                                 
                                 <h3>Current Modeling Approaches</h3>
@@ -694,7 +745,7 @@ LIMIT 10;</textarea>
                                 <p>The correlation between the modeling approach and operational health is striking. Organizations using ad-hoc modeling report the highest rates of firefighting (38%), while those with canonical/semantic models report the lowest (19%). This suggests that investment in thoughtful modeling approaches pays dividends in reduced operational burden.</p>
                             </section>
 
-                            <section class="report-section">
+                            <section id="section-challenges" class="report-section">
                                 <h2>Organizational Challenges</h2>
                                 
                                 <h3>Biggest Bottlenecks</h3>
@@ -744,7 +795,7 @@ LIMIT 10;</textarea>
                                 <p>More than one in four teams (26.2%) report that fighting fires consumes significant time, representing substantial lost productivity across the industry.</p>
                             </section>
 
-                            <section class="report-section">
+                            <section id="section-outlook" class="report-section">
                                 <h2>Team Outlook and Industry Sentiment</h2>
                                 
                                 <h3>Team Growth Expectations for 2026</h3>
@@ -791,7 +842,7 @@ LIMIT 10;</textarea>
                                 <p>The strong demand for semantics, ontologies, and knowledge graphs, combined with the earlier finding that only 5.4% currently use canonical/semantic models, suggests an emerging area of interest with significant room for adoption.</p>
                             </section>
 
-                            <section class="report-section">
+                            <section id="section-voices" class="report-section">
                                 <h2>Industry Voices: What Practitioners Wish Others Understood</h2>
                                 <p>Respondents were asked: What is one thing you wish the wider industry understood about data engineering? The open-text responses reveal several recurring themes.</p>
                                 
@@ -811,7 +862,7 @@ LIMIT 10;</textarea>
                                 <p>Finally, practitioners expressed frustration with unrealistic expectations about timelines. As one respondent put it succinctly: <em>"It is not a project. It is a program that needs to be treated as a capital investment."</em></p>
                             </section>
 
-                            <section class="report-section">
+                            <section id="section-conclusions" class="report-section">
                                 <h2>Conclusions and Implications</h2>
                                 
                                 <h3>Key Takeaways</h3>
@@ -836,6 +887,7 @@ LIMIT 10;</textarea>
                             </footer>
                         </div>
                     </div>
+                    </div><!-- close report-layout -->
                 </section>
             </div>
         </main>
@@ -893,17 +945,6 @@ LIMIT 10;</textarea>
                     </p>
                 </section>
 
-                <section class="about-section">
-                    <h3>About the Practical Data</h3>
-                    <p>
-                        The Practical Data provides insights and education for data engineering professionals.
-                    </p>
-                    <div class="about-links">
-                        <a href="https://thepracticaldata.com" target="_blank" rel="noopener" class="btn btn-secondary">
-                            Visit Website
-                        </a>
-                    </div>
-                </section>
             </div>
         </div>
     </div>

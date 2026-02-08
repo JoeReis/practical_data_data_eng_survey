@@ -52,6 +52,10 @@ async function init() {
         
         // Initialize the UI
         await initializeFilters();
+        
+        // Restore state from URL (after filters are populated)
+        restoreStateFromUrl();
+        
         await updateCharts();
         initializeTabs();
         initializeSqlEditor();
@@ -60,6 +64,10 @@ async function init() {
         initializeDownload();
         initializeMobileMenu();
         initializeAboutModal();
+        initializeShareButton();
+        initializeThemeToggle();
+        initializeChartExport();
+        initializeReportToc();
         
         // Hide loading overlay
         document.getElementById('loading-overlay').classList.add('hidden');
@@ -70,6 +78,87 @@ async function init() {
         document.querySelector('.loading-content p').textContent = 
             `Error: ${error.message}. Please refresh the page.`;
     }
+}
+
+// ===== URL State Management =====
+function restoreStateFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    
+    // Restore sidebar filters
+    for (const [selectId, column] of Object.entries(filterConfig)) {
+        const value = params.get(column);
+        if (value) {
+            const select = document.getElementById(selectId);
+            // Check if the value exists in options
+            const optionExists = Array.from(select.options).some(opt => opt.value === value);
+            if (optionExists) {
+                select.value = value;
+            }
+        }
+    }
+    
+    // Restore chart filters
+    const chartFilterParam = params.get('cf');
+    if (chartFilterParam) {
+        try {
+            const filters = JSON.parse(decodeURIComponent(chartFilterParam));
+            for (const [col, val] of Object.entries(filters)) {
+                chartFilters[col] = val;
+            }
+            renderFilterPills();
+        } catch (e) {
+            console.warn('Could not parse chart filters from URL:', e);
+        }
+    }
+    
+    // Restore tab
+    const tab = params.get('tab');
+    if (tab) {
+        const tabBtn = document.querySelector(`.tab[data-tab="${tab}"]`);
+        if (tabBtn) {
+            // Will be activated by initializeTabs, but set active class now
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tabBtn.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            const content = document.getElementById(`${tab}-tab`);
+            if (content) content.classList.add('active');
+        }
+    }
+}
+
+function updateUrlState() {
+    const params = new URLSearchParams();
+    
+    // Add sidebar filters
+    for (const [selectId, column] of Object.entries(filterConfig)) {
+        const value = document.getElementById(selectId).value;
+        if (value) {
+            params.set(column, value);
+        }
+    }
+    
+    // Add chart filters
+    if (Object.keys(chartFilters).length > 0) {
+        params.set('cf', encodeURIComponent(JSON.stringify(chartFilters)));
+    }
+    
+    // Add active tab (only if not the default 'report' tab)
+    const activeTab = document.querySelector('.tab.active');
+    if (activeTab && activeTab.dataset.tab !== 'report') {
+        params.set('tab', activeTab.dataset.tab);
+    }
+    
+    // Update URL without reload
+    const newUrl = params.toString() 
+        ? `${window.location.pathname}?${params.toString()}`
+        : window.location.pathname;
+    
+    window.history.replaceState({}, '', newUrl);
+}
+
+function getShareableUrl() {
+    updateUrlState();
+    return window.location.href;
 }
 
 // ===== Data Loading =====
@@ -254,6 +343,7 @@ async function onFilterChange() {
     await updateCrosstab();
     responsesPage = 0; // Reset to first page when filters change
     await updateResponses();
+    updateUrlState(); // Update shareable URL
 }
 
 async function updateFilteredCount() {
@@ -397,6 +487,9 @@ function initializeTabs() {
                 content.classList.remove('active');
             });
             document.getElementById(targetId).classList.add('active');
+            
+            // Update URL
+            updateUrlState();
         });
     });
     
@@ -571,6 +664,174 @@ function initializeDownload() {
         link.href = 'data/survey.csv';
         link.download = 'survey_2026_data_engineering.csv';
         link.click();
+    });
+}
+
+// ===== Chart Export =====
+function initializeChartExport() {
+    // Add export buttons to chart cards
+    document.querySelectorAll('.chart-card').forEach(card => {
+        const header = card.querySelector('h3');
+        if (header && !card.querySelector('.chart-export-btn')) {
+            const exportBtn = document.createElement('button');
+            exportBtn.className = 'btn btn-ghost chart-export-btn';
+            exportBtn.title = 'Download chart as PNG';
+            exportBtn.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                </svg>
+            `;
+            
+            // Create header wrapper
+            const headerWrapper = document.createElement('div');
+            headerWrapper.className = 'chart-card-header';
+            header.parentNode.insertBefore(headerWrapper, header);
+            headerWrapper.appendChild(header);
+            headerWrapper.appendChild(exportBtn);
+            
+            exportBtn.addEventListener('click', () => exportChartAsPng(card));
+        }
+    });
+}
+
+async function exportChartAsPng(chartCard) {
+    const title = chartCard.querySelector('h3').textContent;
+    const chartContainer = chartCard.querySelector('.chart');
+    
+    // Create a canvas to render the chart
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Get chart dimensions
+    const rect = chartCard.getBoundingClientRect();
+    const scale = 2; // Higher resolution
+    canvas.width = rect.width * scale;
+    canvas.height = rect.height * scale;
+    ctx.scale(scale, scale);
+    
+    // Draw background
+    const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+    ctx.fillStyle = isDark ? '#161b22' : '#ffffff';
+    ctx.fillRect(0, 0, rect.width, rect.height);
+    
+    // Draw title
+    ctx.fillStyle = isDark ? '#e6edf3' : '#1f2328';
+    ctx.font = 'bold 16px IBM Plex Sans, sans-serif';
+    ctx.fillText(title, 24, 32);
+    
+    // Draw bars
+    const bars = chartContainer.querySelectorAll('.chart-bar-row');
+    let y = 56;
+    const barHeight = 28;
+    const labelWidth = 160;
+    const barMaxWidth = rect.width - labelWidth - 100;
+    
+    bars.forEach((bar, i) => {
+        const label = bar.querySelector('.chart-bar-label').textContent;
+        const value = bar.querySelector('.chart-bar-value').textContent;
+        const fill = bar.querySelector('.chart-bar-fill');
+        const widthPct = parseFloat(fill.style.width) || 0;
+        const color = fill.style.background || CHART_COLORS[i % CHART_COLORS.length];
+        
+        // Draw label
+        ctx.fillStyle = isDark ? '#8b949e' : '#656d76';
+        ctx.font = '13px IBM Plex Sans, sans-serif';
+        ctx.fillText(truncateText(label, 24), 24, y + 18);
+        
+        // Draw bar background
+        ctx.fillStyle = isDark ? '#1c2128' : '#f6f8fa';
+        ctx.fillRect(labelWidth, y, barMaxWidth, 24);
+        
+        // Draw bar fill
+        ctx.fillStyle = color;
+        ctx.fillRect(labelWidth, y, barMaxWidth * (widthPct / 100), 24);
+        
+        // Draw value
+        ctx.fillStyle = isDark ? '#e6edf3' : '#1f2328';
+        ctx.font = 'bold 13px IBM Plex Sans, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(value, rect.width - 24, y + 18);
+        ctx.textAlign = 'left';
+        
+        y += barHeight + 4;
+    });
+    
+    // Add watermark
+    ctx.fillStyle = isDark ? '#6e7681' : '#8c959f';
+    ctx.font = '11px IBM Plex Sans, sans-serif';
+    ctx.fillText('2026 State of Data Engineering Survey • thepracticaldata.com', 24, rect.height - 12);
+    
+    // Download
+    const link = document.createElement('a');
+    link.download = `chart-${title.toLowerCase().replace(/\s+/g, '-')}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+}
+
+// ===== Share Button =====
+function initializeShareButton() {
+    const shareBtn = document.getElementById('share-btn');
+    
+    shareBtn.addEventListener('click', async () => {
+        const url = getShareableUrl();
+        
+        try {
+            await navigator.clipboard.writeText(url);
+            
+            // Show feedback
+            const originalText = shareBtn.innerHTML;
+            shareBtn.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                </svg>
+                Copied!
+            `;
+            shareBtn.classList.add('btn-success');
+            
+            setTimeout(() => {
+                shareBtn.innerHTML = originalText;
+                shareBtn.classList.remove('btn-success');
+            }, 2000);
+            
+        } catch (err) {
+            // Fallback: show URL in prompt
+            prompt('Copy this link:', url);
+        }
+    });
+}
+
+// ===== Theme Toggle =====
+function initializeThemeToggle() {
+    const themeToggle = document.getElementById('theme-toggle');
+    const iconDark = document.getElementById('theme-icon-dark');
+    const iconLight = document.getElementById('theme-icon-light');
+    
+    // Check for saved preference or system preference
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'dark'); // Default to dark
+    
+    if (initialTheme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        iconDark.style.display = 'none';
+        iconLight.style.display = 'block';
+    }
+    
+    themeToggle.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        if (newTheme === 'light') {
+            iconDark.style.display = 'none';
+            iconLight.style.display = 'block';
+        } else {
+            iconDark.style.display = 'block';
+            iconLight.style.display = 'none';
+        }
     });
 }
 
@@ -1217,6 +1478,48 @@ async function exportFilteredCsv() {
         console.error('Export error:', error);
         alert('Error exporting data: ' + error.message);
     }
+}
+
+// ===== Report TOC Scroll Spy =====
+function initializeReportToc() {
+    const tocLinks = document.querySelectorAll('.toc-link');
+    const sections = document.querySelectorAll('#report-tab [id^="section-"]');
+    const reportTab = document.getElementById('report-tab');
+    
+    if (!tocLinks.length || !sections.length) return;
+    
+    // Smooth scroll on click
+    tocLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = link.getAttribute('href').slice(1);
+            const target = document.getElementById(targetId);
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+    
+    // Scroll spy
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.getAttribute('id');
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${id}`) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+        });
+    }, {
+        root: reportTab,
+        rootMargin: '-20% 0px -70% 0px',
+        threshold: 0
+    });
+    
+    sections.forEach(section => observer.observe(section));
 }
 
 // ===== Utility Functions =====
