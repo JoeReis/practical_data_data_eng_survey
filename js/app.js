@@ -1065,7 +1065,6 @@ async function exportChartAsPng(chartCard) {
 
 // ===== Embeddable Charts =====
 let currentEmbedColumn = null;
-const EMBED_BASE_URL = 'https://thepracticaldata.com/survey/embed.html';
 
 function initializeChartEmbed() {
     // Add embed buttons to chart cards (alongside the existing export buttons)
@@ -1155,7 +1154,7 @@ function closeEmbedModal() {
     preview.innerHTML = '';
 }
 
-function buildEmbedUrl() {
+function buildEmbedParams() {
     const theme = document.getElementById('embed-theme').value;
     const metric = document.getElementById('embed-metric').value;
     const includeFilters = document.getElementById('embed-include-filters').checked;
@@ -1182,24 +1181,33 @@ function buildEmbedUrl() {
         }
     }
     
-    return `${EMBED_BASE_URL}?${params.toString()}`;
+    return params.toString();
 }
 
 function updateEmbedCode() {
     const width = document.getElementById('embed-width').value;
     const height = document.getElementById('embed-height').value;
-    const url = buildEmbedUrl();
+    const qs = buildEmbedParams();
     
-    // Generate iframe code
-    const iframeCode = `<iframe src="${url}" width="${width}" height="${height}" frameborder="0" style="border: 1px solid #30363d; border-radius: 8px;" loading="lazy" title="2026 Data Engineering Survey Chart"></iframe>`;
+    // Derive base URL from the current page location
+    const baseUrl = new URL('embed.html', window.location.href).href;
+    
+    // Full URL for the copyable embed code
+    const absoluteUrl = `${baseUrl}?${qs}`;
+    
+    // Relative URL for the live preview
+    const previewUrl = `embed.html?${qs}`;
+    
+    // Generate iframe code with absolute URL
+    const iframeCode = `<iframe src="${absoluteUrl}" width="${width}" height="${height}" frameborder="0" style="border: 1px solid #30363d; border-radius: 8px;" loading="lazy" title="2026 Data Engineering Survey Chart"></iframe>`;
     
     // Show code
     const codeOutput = document.getElementById('embed-code-output');
     codeOutput.textContent = iframeCode;
     
-    // Show preview
+    // Show preview with relative URL
     const preview = document.getElementById('embed-preview');
-    preview.innerHTML = `<iframe src="${escapeHtml(url)}" style="width: 100%; height: 300px; border: none;" loading="lazy" title="Chart preview"></iframe>`;
+    preview.innerHTML = `<iframe src="${escapeHtml(previewUrl)}" style="width: 100%; height: 300px; border: none;" loading="lazy" title="Chart preview"></iframe>`;
 }
 
 async function copyEmbedCode() {
