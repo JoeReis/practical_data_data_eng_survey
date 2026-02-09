@@ -701,6 +701,7 @@ function updateFilterPanelVisibility() {
     const activeTab = document.querySelector('.tab.active');
     const filterPanel = document.querySelector('.filter-panel');
     const mainContent = document.querySelector('.main-content');
+    const mobileFilterBtn = document.getElementById('mobile-menu-toggle');
     
     if (!activeTab || !filterPanel) return;
     
@@ -709,9 +710,11 @@ function updateFilterPanelVisibility() {
     if (showFilters) {
         filterPanel.classList.remove('hidden-for-tab');
         mainContent.classList.remove('no-filter-panel');
+        if (mobileFilterBtn) mobileFilterBtn.classList.remove('hidden-for-tab');
     } else {
         filterPanel.classList.add('hidden-for-tab');
         mainContent.classList.add('no-filter-panel');
+        if (mobileFilterBtn) mobileFilterBtn.classList.add('hidden-for-tab');
     }
 }
 

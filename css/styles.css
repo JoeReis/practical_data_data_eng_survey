@@ -432,6 +432,10 @@ body {
     display: none;
 }
 
+#mobile-menu-toggle.hidden-for-tab {
+    display: none !important;
+}
+
 /* ===== Filter Panel ===== */
 .filter-panel {
     background: var(--color-bg-elevated);
