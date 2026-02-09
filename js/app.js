@@ -102,6 +102,7 @@ async function init() {
         initializeChartTooltip();
         initializeSqlHistory();
         initializeComparisonMode();
+        initializeChartEmbed();
         
         updateLoadingProgress('Ready!', 100);
         
@@ -1060,6 +1061,172 @@ async function exportChartAsPng(chartCard) {
     link.download = `chart-${title.toLowerCase().replace(/\s+/g, '-')}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
+}
+
+// ===== Embeddable Charts =====
+let currentEmbedColumn = null;
+const EMBED_BASE_URL = 'https://thepracticaldata.com/survey/embed.html';
+
+function initializeChartEmbed() {
+    // Add embed buttons to chart cards (alongside the existing export buttons)
+    document.querySelectorAll('.chart-card').forEach(card => {
+        const headerWrapper = card.querySelector('.chart-card-header');
+        const chartEl = card.querySelector('.chart');
+        if (!headerWrapper || !chartEl) return;
+        
+        // Find which column this chart uses
+        const chartId = chartEl.id;
+        const config = chartConfig[chartId];
+        if (!config) return;
+        
+        const embedBtn = document.createElement('button');
+        embedBtn.className = 'btn btn-ghost chart-embed-btn';
+        embedBtn.title = 'Get embed code';
+        embedBtn.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294l4-13zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0z"/>
+            </svg>
+        `;
+        
+        // Insert before the download button
+        const exportBtn = headerWrapper.querySelector('.chart-export-btn');
+        if (exportBtn) {
+            headerWrapper.insertBefore(embedBtn, exportBtn);
+        } else {
+            headerWrapper.appendChild(embedBtn);
+        }
+        
+        embedBtn.addEventListener('click', () => openEmbedModal(config.column));
+    });
+    
+    // Modal close handlers
+    const modal = document.getElementById('embed-modal');
+    const closeBtn = document.getElementById('close-embed-modal');
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeEmbedModal);
+    }
+    
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeEmbedModal();
+        });
+    }
+    
+    // Copy button
+    const copyBtn = document.getElementById('embed-copy-btn');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', copyEmbedCode);
+    }
+    
+    // Option change handlers — regenerate code + preview
+    ['embed-theme', 'embed-metric', 'embed-width', 'embed-height', 'embed-include-filters'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', updateEmbedCode);
+    });
+}
+
+function openEmbedModal(column) {
+    currentEmbedColumn = column;
+    
+    // Sync metric dropdown with current chart metric
+    const metricSelect = document.getElementById('embed-metric');
+    if (metricSelect) metricSelect.value = chartMetric;
+    
+    // Sync theme dropdown with current theme
+    const themeSelect = document.getElementById('embed-theme');
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    if (themeSelect) themeSelect.value = currentTheme === 'light' ? 'light' : 'dark';
+    
+    updateEmbedCode();
+    
+    const modal = document.getElementById('embed-modal');
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeEmbedModal() {
+    const modal = document.getElementById('embed-modal');
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+    
+    // Remove preview iframe to stop it from running
+    const preview = document.getElementById('embed-preview');
+    preview.innerHTML = '';
+}
+
+function buildEmbedUrl() {
+    const theme = document.getElementById('embed-theme').value;
+    const metric = document.getElementById('embed-metric').value;
+    const includeFilters = document.getElementById('embed-include-filters').checked;
+    
+    const config = Object.values(chartConfig).find(c => c.column === currentEmbedColumn);
+    const limit = config ? config.limit : 8;
+    
+    const params = new URLSearchParams();
+    params.set('col', currentEmbedColumn);
+    params.set('limit', limit);
+    params.set('metric', metric);
+    params.set('theme', theme);
+    
+    // Add active filters if checked
+    if (includeFilters) {
+        for (const [selectId, column] of Object.entries(filterConfig)) {
+            const value = document.getElementById(selectId).value;
+            if (value) {
+                params.set(`f_${column}`, value);
+            }
+        }
+        for (const [column, value] of Object.entries(chartFilters)) {
+            params.set(`f_${column}`, value);
+        }
+    }
+    
+    return `${EMBED_BASE_URL}?${params.toString()}`;
+}
+
+function updateEmbedCode() {
+    const width = document.getElementById('embed-width').value;
+    const height = document.getElementById('embed-height').value;
+    const url = buildEmbedUrl();
+    
+    // Generate iframe code
+    const iframeCode = `<iframe src="${url}" width="${width}" height="${height}" frameborder="0" style="border: 1px solid #30363d; border-radius: 8px;" loading="lazy" title="2026 Data Engineering Survey Chart"></iframe>`;
+    
+    // Show code
+    const codeOutput = document.getElementById('embed-code-output');
+    codeOutput.textContent = iframeCode;
+    
+    // Show preview
+    const preview = document.getElementById('embed-preview');
+    preview.innerHTML = `<iframe src="${escapeHtml(url)}" style="width: 100%; height: 300px; border: none;" loading="lazy" title="Chart preview"></iframe>`;
+}
+
+async function copyEmbedCode() {
+    const code = document.getElementById('embed-code-output').textContent;
+    
+    try {
+        await navigator.clipboard.writeText(code);
+        showToast('Embed code copied to clipboard!', 'success');
+        
+        // Visual feedback on button
+        const btn = document.getElementById('embed-copy-btn');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+            </svg>
+            Copied!
+        `;
+        btn.classList.add('btn-success');
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('btn-success');
+        }, 2000);
+    } catch (err) {
+        // Fallback
+        prompt('Copy this embed code:', code);
+    }
 }
 
 // ===== Chart Tooltip =====
@@ -2099,14 +2266,18 @@ function initializeKeyboardShortcuts() {
 function closeAllModals() {
     const aboutModal = document.getElementById('about-modal');
     const shortcutsModal = document.getElementById('shortcuts-modal');
+    const embedModal = document.getElementById('embed-modal');
     
-    if (aboutModal.classList.contains('open')) {
+    if (aboutModal && aboutModal.classList.contains('open')) {
         aboutModal.classList.remove('open');
         document.body.style.overflow = '';
     }
-    if (shortcutsModal.classList.contains('open')) {
+    if (shortcutsModal && shortcutsModal.classList.contains('open')) {
         shortcutsModal.classList.remove('open');
         document.body.style.overflow = '';
+    }
+    if (embedModal && embedModal.classList.contains('open')) {
+        closeEmbedModal();
     }
 }
 

@@ -1082,6 +1082,79 @@ LIMIT 10;</textarea>
         </div>
     </div>
 
+    <!-- Embed Chart Modal -->
+    <div id="embed-modal" class="modal-overlay">
+        <div class="modal embed-modal-dialog">
+            <div class="modal-header">
+                <h2>Embed Chart</h2>
+                <button id="close-embed-modal" class="btn btn-ghost modal-close" aria-label="Close">
+                    <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-content">
+                <div class="embed-options">
+                    <div class="embed-option-row">
+                        <div class="embed-option-group">
+                            <label for="embed-theme">Theme</label>
+                            <select id="embed-theme" class="filter-select">
+                                <option value="dark">Dark</option>
+                                <option value="light">Light</option>
+                            </select>
+                        </div>
+                        <div class="embed-option-group">
+                            <label for="embed-metric">Metric</label>
+                            <select id="embed-metric" class="filter-select">
+                                <option value="count">Count</option>
+                                <option value="percent">Percent</option>
+                            </select>
+                        </div>
+                        <div class="embed-option-group">
+                            <label for="embed-width">Width</label>
+                            <select id="embed-width" class="filter-select">
+                                <option value="100%">Full width</option>
+                                <option value="600px">600px</option>
+                                <option value="500px">500px</option>
+                                <option value="400px">400px</option>
+                            </select>
+                        </div>
+                        <div class="embed-option-group">
+                            <label for="embed-height">Height</label>
+                            <select id="embed-height" class="filter-select">
+                                <option value="400px">400px</option>
+                                <option value="350px">350px</option>
+                                <option value="300px">300px</option>
+                                <option value="500px">500px</option>
+                            </select>
+                        </div>
+                    </div>
+                    <label class="embed-filter-toggle">
+                        <input type="checkbox" id="embed-include-filters" checked>
+                        <span>Include current filters</span>
+                    </label>
+                </div>
+                <div class="embed-preview-section">
+                    <div class="embed-preview-label">Preview</div>
+                    <div class="embed-preview" id="embed-preview"></div>
+                </div>
+                <div class="embed-code-section">
+                    <div class="embed-code-header">
+                        <span class="embed-code-label">Embed Code</span>
+                        <button id="embed-copy-btn" class="btn btn-secondary embed-copy-btn">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25v-7.5z"/>
+                                <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25v-7.5zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25h-7.5z"/>
+                            </svg>
+                            Copy
+                        </button>
+                    </div>
+                    <pre class="embed-code-block"><code id="embed-code-output"></code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Keyboard Shortcuts Modal -->
     <div id="shortcuts-modal" class="modal-overlay">
         <div class="modal shortcuts-modal">
