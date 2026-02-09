@@ -7,6 +7,9 @@ let db = null;
 let conn = null;
 let editor = null;
 let lastSqlResults = null; // Store last query results for export
+let codeMirrorLoaded = false; // Lazy-load tracking
+let codeMirrorLoading = false;
+let responsesSearchTerm = ''; // Search term for responses tab
 
 // Chart filters - applied by clicking on chart bars
 // Structure: { column: value, ... }
@@ -21,10 +24,23 @@ const CHART_COLORS = [
     '#a371f7', '#db61a2', '#79c0ff', '#7ee787'
 ];
 
+// ===== Loading Progress =====
+function updateLoadingProgress(message, percent) {
+    const textEl = document.querySelector('.loading-text');
+    const barEl = document.querySelector('.loading-progress-bar');
+    if (textEl) textEl.textContent = message;
+    if (barEl) {
+        barEl.style.animation = 'none';
+        barEl.style.width = `${percent}%`;
+        barEl.style.transform = 'none';
+    }
+}
+
 // ===== Initialization =====
 async function init() {
     try {
         console.log('Initializing DuckDB-WASM...');
+        updateLoadingProgress('Initializing DuckDB engine...', 10);
         
         // Initialize DuckDB using the jsdelivr CDN bundles
         const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
@@ -43,12 +59,15 @@ async function init() {
         
         await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
         URL.revokeObjectURL(worker_url);
+        updateLoadingProgress('Connecting to database...', 30);
         
         conn = await db.connect();
         console.log('DuckDB connection established');
+        updateLoadingProgress('Loading survey data...', 50);
         
         // Load the Parquet file
         await loadData();
+        updateLoadingProgress('Initializing filters...', 65);
         
         // Initialize the UI
         await initializeFilters();
@@ -56,10 +75,17 @@ async function init() {
         // Restore state from URL (after filters are populated)
         restoreStateFromUrl();
         
+        // Restore filters from localStorage if no URL params
+        restoreFiltersFromLocalStorage();
+        
+        updateLoadingProgress('Rendering charts...', 80);
         await updateCharts();
+        
+        updateLoadingProgress('Setting up interface...', 90);
         initializeTabs();
         initializeChartMetricToggle();
-        initializeSqlEditor();
+        // CodeMirror is now lazy-loaded when SQL tab is first activated
+        initializeSqlEditorPlaceholder();
         initializeCrosstab();
         initializeResponses();
         initializeDownload();
@@ -70,14 +96,21 @@ async function init() {
         initializeChartExport();
         initializeReportToc();
         initializeScrollToTop();
+        initializeKeyboardShortcuts();
+        initializeShortcutsModal();
+        initializeChartTooltip();
+        
+        updateLoadingProgress('Ready!', 100);
         
         // Hide loading overlay
-        document.getElementById('loading-overlay').classList.add('hidden');
+        setTimeout(() => {
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }, 200);
         
         console.log('App initialized successfully');
     } catch (error) {
         console.error('Initialization error:', error);
-        document.querySelector('.loading-content p').textContent = 
+        document.querySelector('.loading-text').textContent = 
             `Error: ${error.message}. Please refresh the page.`;
     }
 }
@@ -346,6 +379,80 @@ async function onFilterChange() {
     responsesPage = 0; // Reset to first page when filters change
     await updateResponses();
     updateUrlState(); // Update shareable URL
+    saveFiltersToLocalStorage(); // Persist for return visits
+    announceFilterChange(); // Accessibility: announce to screen readers
+}
+
+// ===== localStorage Filter Persistence =====
+function saveFiltersToLocalStorage() {
+    try {
+        const state = {};
+        for (const [selectId, column] of Object.entries(filterConfig)) {
+            const value = document.getElementById(selectId).value;
+            if (value) state[selectId] = value;
+        }
+        if (Object.keys(chartFilters).length > 0) {
+            state._chartFilters = { ...chartFilters };
+        }
+        localStorage.setItem('surveyFilters', JSON.stringify(state));
+    } catch (e) {
+        // Private browsing or storage full — ignore
+    }
+}
+
+function restoreFiltersFromLocalStorage() {
+    // Only restore if no URL params are present (URL takes priority)
+    if (window.location.search) return;
+    
+    try {
+        const saved = localStorage.getItem('surveyFilters');
+        if (!saved) return;
+        
+        const state = JSON.parse(saved);
+        let anyRestored = false;
+        
+        for (const [selectId, column] of Object.entries(filterConfig)) {
+            if (state[selectId]) {
+                const select = document.getElementById(selectId);
+                const optionExists = Array.from(select.options).some(opt => opt.value === state[selectId]);
+                if (optionExists) {
+                    select.value = state[selectId];
+                    anyRestored = true;
+                }
+            }
+        }
+        
+        if (state._chartFilters) {
+            for (const [col, val] of Object.entries(state._chartFilters)) {
+                chartFilters[col] = val;
+            }
+            renderFilterPills();
+            anyRestored = true;
+        }
+        
+        if (anyRestored) {
+            // Re-apply filters without triggering another save
+            updateFilteredCount();
+        }
+    } catch (e) {
+        // Corrupted data — ignore
+    }
+}
+
+// ===== ARIA Announcements =====
+function announce(message) {
+    const announcer = document.getElementById('aria-announcer');
+    if (announcer) {
+        announcer.textContent = message;
+        // Clear after announcement is read
+        setTimeout(() => { announcer.textContent = ''; }, 1000);
+    }
+}
+
+function announceFilterChange() {
+    const count = document.getElementById('filtered-count').textContent;
+    const total = document.getElementById('total-count').textContent;
+    announce(`Showing ${count} of ${total} responses`);
 }
 
 async function updateFilteredCount() {
@@ -362,6 +469,8 @@ function resetFilters() {
     }
     // Clear chart filters
     clearAllChartFilters();
+    // Clear localStorage
+    try { localStorage.removeItem('surveyFilters'); } catch (e) { /* ignore */ }
 }
 
 // ===== Chart Rendering =====
@@ -491,7 +600,7 @@ function initializeTabs() {
     updateFilterPanelVisibility();
     
     tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
+        tab.addEventListener('click', async () => {
             // Update tab states
             tabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
@@ -502,6 +611,11 @@ function initializeTabs() {
                 content.classList.remove('active');
             });
             document.getElementById(targetId).classList.add('active');
+            
+            // Lazy-load CodeMirror when SQL tab is first activated
+            if (tab.dataset.tab === 'sql' && !editor) {
+                await ensureSqlEditorReady();
+            }
             
             // Update filter panel visibility
             updateFilterPanelVisibility();
@@ -543,9 +657,83 @@ function initializeChartMetricToggle() {
     });
 }
 
-// ===== SQL Editor =====
-function initializeSqlEditor() {
+// ===== SQL Editor (Lazy-loaded) =====
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
+function loadStylesheet(href) {
+    return new Promise((resolve) => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = href;
+        link.onload = resolve;
+        link.onerror = resolve; // Don't block on CSS failure
+        document.head.appendChild(link);
+    });
+}
+
+async function loadCodeMirror() {
+    if (codeMirrorLoaded) return;
+    if (codeMirrorLoading) {
+        while (!codeMirrorLoaded) {
+            await new Promise(r => setTimeout(r, 50));
+        }
+        return;
+    }
+    codeMirrorLoading = true;
+    
+    // Load CSS files
+    await Promise.all([
+        loadStylesheet('https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css'),
+        loadStylesheet('https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css')
+    ]);
+    
+    // Load JS files sequentially (mode depends on core)
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js');
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js');
+    
+    codeMirrorLoaded = true;
+    codeMirrorLoading = false;
+}
+
+function initializeSqlEditorPlaceholder() {
+    // Set up basic event handlers; full editor loads on first SQL tab activation
+    document.getElementById('run-query').addEventListener('click', async () => {
+        await ensureSqlEditorReady();
+        runQuery();
+    });
+    
+    // Example queries
+    document.querySelectorAll('.example-query').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            await ensureSqlEditorReady();
+            editor.setValue(btn.dataset.query);
+            runQuery();
+        });
+    });
+    
+    // Export SQL results
+    document.getElementById('export-sql-results').addEventListener('click', exportSqlResults);
+}
+
+async function ensureSqlEditorReady() {
+    if (editor) return;
+    
     const textarea = document.getElementById('sql-editor');
+    const sqlContainer = textarea.closest('.sql-editor-wrapper');
+    
+    // Show loading state
+    textarea.placeholder = 'Loading SQL editor...';
+    textarea.disabled = true;
+    
+    await loadCodeMirror();
     
     // Initialize CodeMirror
     editor = CodeMirror.fromTextArea(textarea, {
@@ -558,25 +746,11 @@ function initializeSqlEditor() {
         lineWrapping: true
     });
     
-    // Run query button
-    document.getElementById('run-query').addEventListener('click', runQuery);
-    
     // Ctrl+Enter to run
     editor.setOption('extraKeys', {
         'Ctrl-Enter': runQuery,
         'Cmd-Enter': runQuery
     });
-    
-    // Example queries
-    document.querySelectorAll('.example-query').forEach(btn => {
-        btn.addEventListener('click', () => {
-            editor.setValue(btn.dataset.query);
-            runQuery();
-        });
-    });
-    
-    // Export SQL results
-    document.getElementById('export-sql-results').addEventListener('click', exportSqlResults);
 }
 
 function exportSqlResults() {
@@ -813,6 +987,60 @@ async function exportChartAsPng(chartCard) {
     link.download = `chart-${title.toLowerCase().replace(/\s+/g, '-')}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
+}
+
+// ===== Chart Tooltip =====
+let tooltipEl = null;
+
+function initializeChartTooltip() {
+    // Create tooltip element
+    tooltipEl = document.createElement('div');
+    tooltipEl.className = 'chart-tooltip';
+    tooltipEl.innerHTML = `
+        <div class="chart-tooltip-label"></div>
+        <div class="chart-tooltip-value"></div>
+    `;
+    document.body.appendChild(tooltipEl);
+    
+    // Delegate hover events on chart bars
+    document.addEventListener('mouseover', (e) => {
+        const bar = e.target.closest('.chart-bar-clickable');
+        if (!bar) return;
+        
+        const label = bar.querySelector('.chart-bar-label').textContent;
+        const value = bar.querySelector('.chart-bar-value').textContent;
+        const fill = bar.querySelector('.chart-bar-fill');
+        const widthPct = parseFloat(fill.style.width) || 0;
+        
+        // Get the count and percent info
+        const isPercent = chartMetric === 'percent';
+        const countText = isPercent ? value : `<strong>${value}</strong> responses`;
+        const pctText = isPercent ? `<strong>${value}</strong>` : `<strong>${widthPct.toFixed(1)}%</strong> of filtered`;
+        
+        tooltipEl.querySelector('.chart-tooltip-label').textContent = label;
+        tooltipEl.querySelector('.chart-tooltip-value').innerHTML = isPercent 
+            ? `${pctText} (click to filter)` 
+            : `${countText} &middot; ${pctText}`;
+        tooltipEl.classList.add('visible');
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (!tooltipEl.classList.contains('visible')) return;
+        const x = Math.min(e.clientX + 12, window.innerWidth - tooltipEl.offsetWidth - 8);
+        const y = Math.min(e.clientY + 12, window.innerHeight - tooltipEl.offsetHeight - 8);
+        tooltipEl.style.left = `${x}px`;
+        tooltipEl.style.top = `${y}px`;
+    });
+    
+    document.addEventListener('mouseout', (e) => {
+        const bar = e.target.closest('.chart-bar-clickable');
+        if (bar) {
+            // Check if we're moving to a child element within the bar
+            const related = e.relatedTarget;
+            if (related && bar.contains(related)) return;
+            tooltipEl.classList.remove('visible');
+        }
+    });
 }
 
 // ===== Share Button =====
@@ -1339,8 +1567,28 @@ function initializeResponses() {
     // Toggle for text fields
     document.getElementById('show-text-fields').addEventListener('change', updateResponses);
     
+    // Search input for responses
+    let searchDebounce = null;
+    const searchInput = document.getElementById('responses-search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchDebounce);
+            searchDebounce = setTimeout(() => {
+                responsesSearchTerm = searchInput.value.trim();
+                responsesPage = 0;
+                updateResponses();
+            }, 300);
+        });
+    }
+    
     // Export filtered CSV
     document.getElementById('export-filtered-csv').addEventListener('click', exportFilteredCsv);
+    
+    // Export filtered JSON
+    const jsonBtn = document.getElementById('export-filtered-json');
+    if (jsonBtn) {
+        jsonBtn.addEventListener('click', exportFilteredJson);
+    }
     
     // Initial load
     updateResponses();
@@ -1351,7 +1599,22 @@ async function updateResponses() {
     const showTextFields = document.getElementById('show-text-fields').checked;
     
     try {
-        const whereClause = getWhereClause();
+        let whereClause = getWhereClause();
+        
+        // Add search term to WHERE clause
+        if (responsesSearchTerm) {
+            const escapedSearch = responsesSearchTerm.replace(/'/g, "''");
+            const searchCondition = `(
+                education_topic ILIKE '%${escapedSearch}%' 
+                OR industry_wish ILIKE '%${escapedSearch}%'
+                OR role ILIKE '%${escapedSearch}%'
+                OR industry ILIKE '%${escapedSearch}%'
+                OR region ILIKE '%${escapedSearch}%'
+            )`;
+            whereClause = whereClause 
+                ? `${whereClause} AND ${searchCondition}`
+                : `WHERE ${searchCondition}`;
+        }
         
         // Get total count
         const countResult = await conn.query(`SELECT COUNT(*) as count FROM survey ${whereClause}`);
@@ -1534,6 +1797,47 @@ async function exportFilteredCsv() {
     }
 }
 
+// ===== JSON Export =====
+async function exportFilteredJson() {
+    try {
+        const whereClause = getWhereClause();
+        const query = `SELECT * FROM survey ${whereClause} ORDER BY timestamp DESC`;
+        const result = await conn.query(query);
+        const rows = result.toArray();
+        
+        if (rows.length === 0) {
+            showToast('No data to export with current filters', 'error');
+            return;
+        }
+        
+        // Get column names
+        const columns = result.schema.fields.map(f => f.name);
+        
+        // Build JSON array
+        const jsonData = rows.map(row => {
+            const obj = {};
+            for (const col of columns) {
+                obj[col] = row[col];
+            }
+            return obj;
+        });
+        
+        // Download
+        const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `survey_filtered_${rows.length}_responses.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+        
+        showToast(`Exported ${rows.length} responses as JSON`, 'success');
+    } catch (error) {
+        console.error('JSON export error:', error);
+        showToast('Error exporting data: ' + error.message, 'error');
+    }
+}
+
 // ===== Toast Notifications =====
 function showToast(message, type = 'default', duration = 3000) {
     const container = document.getElementById('toast-container');
@@ -1656,6 +1960,122 @@ function initializeReportToc() {
     });
 
     sections.forEach(section => observer.observe(section));
+}
+
+// ===== Keyboard Shortcuts =====
+function initializeKeyboardShortcuts() {
+    const TAB_KEYS = { '1': 'report', '2': 'charts', '3': 'crosstab', '4': 'responses', '5': 'sql' };
+    
+    document.addEventListener('keydown', (e) => {
+        // Skip if user is typing in an input, textarea, or contenteditable
+        const target = e.target;
+        const isTyping = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || 
+                         target.tagName === 'SELECT' || target.isContentEditable;
+        
+        // CodeMirror elements
+        const isCodeMirror = target.closest('.CodeMirror');
+        
+        if (isTyping || isCodeMirror) {
+            // Only handle Escape in inputs
+            if (e.key === 'Escape') {
+                target.blur();
+                closeAllModals();
+            }
+            return;
+        }
+        
+        // ? — Show shortcuts help
+        if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+            e.preventDefault();
+            toggleShortcutsModal();
+            return;
+        }
+        
+        // Escape — Close modals / clear focus
+        if (e.key === 'Escape') {
+            closeAllModals();
+            closeMobileMenu();
+            return;
+        }
+        
+        // / — Focus first filter
+        if (e.key === '/') {
+            e.preventDefault();
+            const firstFilter = document.getElementById('filter-role');
+            if (firstFilter) {
+                // On mobile, open filter panel first
+                const filterPanel = document.querySelector('.filter-panel');
+                if (window.innerWidth <= 900 && !filterPanel.classList.contains('open')) {
+                    document.getElementById('mobile-menu-toggle').click();
+                }
+                firstFilter.focus();
+            }
+            return;
+        }
+        
+        // 1-5 — Switch tabs
+        if (TAB_KEYS[e.key]) {
+            e.preventDefault();
+            const tabBtn = document.querySelector(`.tab[data-tab="${TAB_KEYS[e.key]}"]`);
+            if (tabBtn) tabBtn.click();
+            return;
+        }
+    });
+}
+
+function closeAllModals() {
+    const aboutModal = document.getElementById('about-modal');
+    const shortcutsModal = document.getElementById('shortcuts-modal');
+    
+    if (aboutModal.classList.contains('open')) {
+        aboutModal.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+    if (shortcutsModal.classList.contains('open')) {
+        shortcutsModal.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+}
+
+// ===== Shortcuts Modal =====
+function initializeShortcutsModal() {
+    const modal = document.getElementById('shortcuts-modal');
+    const closeBtn = document.getElementById('close-shortcuts-modal');
+    const footerBtn = document.getElementById('keyboard-shortcuts-btn');
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            modal.classList.remove('open');
+            document.body.style.overflow = '';
+        });
+    }
+    
+    if (footerBtn) {
+        footerBtn.addEventListener('click', () => toggleShortcutsModal());
+    }
+    
+    // Close on backdrop click
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+        });
+    }
+}
+
+function toggleShortcutsModal() {
+    const modal = document.getElementById('shortcuts-modal');
+    if (!modal) return;
+    
+    if (modal.classList.contains('open')) {
+        modal.classList.remove('open');
+        document.body.style.overflow = '';
+    } else {
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
 }
 
 // ===== Utility Functions =====

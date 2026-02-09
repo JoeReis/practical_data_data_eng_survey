@@ -126,4 +126,4 @@ Data from The Practical Data 2026 State of Data Engineering Survey.
 
 ---
 
-Built with DuckDB-WASM • [The Practical Data](https://thepracticaldata.com)
+Built with DuckDB-WASM

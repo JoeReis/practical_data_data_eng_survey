@@ -22,6 +22,37 @@
     <meta name="twitter:description" content="Insights from 1,101 data professionals on AI adoption, data modeling challenges, and the future of data engineering.">
     <meta name="twitter:image" content="https://thepracticaldata.com/survey/og-image.png">
     
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://thepracticaldata.com/survey/">
+
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com 'unsafe-eval' blob:; style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net blob:;">
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Dataset",
+        "name": "2026 State of Data Engineering Survey",
+        "description": "A comprehensive survey of 1,101 data professionals on AI adoption, data modeling challenges, organizational bottlenecks, and the future of data engineering.",
+        "url": "https://thepracticaldata.com/survey/",
+        "creator": {
+            "@type": "Person",
+            "name": "Joe Reis"
+        },
+        "datePublished": "2026-02",
+        "temporalCoverage": "2025-12/2026-01",
+        "spatialCoverage": "Global",
+        "variableMeasured": ["Role", "Organization Size", "Industry", "Region", "AI Usage Frequency", "Storage Environment", "Architecture Trend", "Data Modeling Approach"],
+        "measurementTechnique": "Online Survey",
+        "distribution": {
+            "@type": "DataDownload",
+            "encodingFormat": "text/csv",
+            "contentUrl": "https://thepracticaldata.com/survey/data/survey.csv"
+        }
+    }
+    </script>
+
     <!-- LLM crawlability -->
     <link rel="alternate" type="text/plain" href="llms.txt" title="LLM-friendly site summary">
     
@@ -30,11 +61,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
-    <!-- CodeMirror for SQL editor -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+    <!-- CodeMirror CSS & JS lazy-loaded when SQL tab is first activated -->
 </head>
 <body>
+    <!-- Skip to Content (Accessibility) -->
+    <a href="#main-content" class="skip-to-content">Skip to main content</a>
+
+    <!-- ARIA Live Region for screen reader announcements -->
+    <div id="aria-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
     <div class="app-container">
         <!-- Header -->
         <header class="header">
@@ -111,7 +146,7 @@
         </button>
 
         <!-- Main Content -->
-        <main class="main-content">
+        <main id="main-content" class="main-content">
             <!-- Filter Panel -->
             <aside class="filter-panel">
                 <div class="panel-header">
@@ -155,7 +190,7 @@
                         <option value="">All Frequencies</option>
                     </select>
                 </div>
-                <div class="filter-stats">
+                <div class="filter-stats" aria-live="polite" aria-atomic="true">
                     <span id="filtered-count">--</span> of <span id="total-count">--</span> responses
                 </div>
             </aside>
@@ -311,6 +346,9 @@
                             <div class="responses-info">
                                 <span>Showing <strong id="responses-showing">0</strong> of <strong id="responses-total">0</strong> responses</span>
                             </div>
+                            <div class="responses-search">
+                                <input type="text" id="responses-search-input" class="filter-select" placeholder="Search open-ended responses..." aria-label="Search responses">
+                            </div>
                             <div class="responses-controls">
                                 <label class="responses-toggle">
                                     <input type="checkbox" id="show-text-fields" checked>
@@ -321,7 +359,13 @@
                                         <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
                                         <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
                                     </svg>
-                                    Export Filtered
+                                    Export CSV
+                                </button>
+                                <button id="export-filtered-json" class="btn btn-secondary">
+                                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                        <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zM9.5 3A1.5 1.5 0 0 1 8 1.5V0H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5H9.5z"/>
+                                    </svg>
+                                    Export JSON
                                 </button>
                             </div>
                         </div>
@@ -918,6 +962,19 @@ LIMIT 10;</textarea>
         <!-- Footer -->
         <footer class="footer">
             <p>Built with DuckDB-WASM • Data from The Practical Data 2026 Survey • <a href="llms.txt">llms.txt</a></p>
+            <p class="footer-meta">
+                <span class="version-badge">v1.0 • Last updated February 2026</span>
+                <span class="footer-separator">•</span>
+                <a href="mailto:joe@joereismedia.com?subject=Survey%20Explorer%20Feedback" class="feedback-link">Send Feedback</a>
+                <span class="footer-separator">•</span>
+                <button id="keyboard-shortcuts-btn" class="btn btn-ghost footer-shortcuts-btn" title="Keyboard shortcuts">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M14 5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h12zM2 4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H2z"/>
+                        <path d="M13 10.25a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25v-.5zm0-2a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25v-.5zm-5 0A.25.25 0 0 1 8.25 8h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 8 8.75v-.5zm2 0a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25v-.5zm-2 2A.25.25 0 0 1 8.25 10h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 8 10.75v-.5zm-2-2A.25.25 0 0 1 6.25 8h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 6 8.75v-.5z"/>
+                    </svg>
+                    Shortcuts (?)
+                </button>
+            </p>
         </footer>
     </div>
 
@@ -972,9 +1029,40 @@ LIMIT 10;</textarea>
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="shortcuts-modal" class="modal-overlay">
+        <div class="modal shortcuts-modal">
+            <div class="modal-header">
+                <h2>Keyboard Shortcuts</h2>
+                <button id="close-shortcuts-modal" class="btn btn-ghost modal-close" aria-label="Close">
+                    <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-content">
+                <div class="shortcuts-grid">
+                    <div class="shortcut-section">
+                        <h3>Navigation</h3>
+                        <div class="shortcut-row"><kbd>1</kbd> <span>Report tab</span></div>
+                        <div class="shortcut-row"><kbd>2</kbd> <span>Charts tab</span></div>
+                        <div class="shortcut-row"><kbd>3</kbd> <span>Crosstab tab</span></div>
+                        <div class="shortcut-row"><kbd>4</kbd> <span>Responses tab</span></div>
+                        <div class="shortcut-row"><kbd>5</kbd> <span>SQL Query tab</span></div>
+                    </div>
+                    <div class="shortcut-section">
+                        <h3>Actions</h3>
+                        <div class="shortcut-row"><kbd>/</kbd> <span>Focus filter panel</span></div>
+                        <div class="shortcut-row"><kbd>Esc</kbd> <span>Close modal / clear focus</span></div>
+                        <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> <span>Run SQL query</span></div>
+                        <div class="shortcut-row"><kbd>?</kbd> <span>Show this help</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts (CodeMirror loaded lazily when SQL tab is activated) -->
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
