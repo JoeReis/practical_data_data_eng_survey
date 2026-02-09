@@ -1605,20 +1605,9 @@ body {
     .header-left {
         flex: 1;
         min-width: 0;
-        overflow: hidden;
     }
 
     .header-actions {
-        flex-shrink: 0;
-        gap: var(--space-xs);
-    }
-
-    /* Hide text labels on tablet, show only icons */
-    .btn-text {
-        display: none;
-    }
-
-    #download-csv {
         display: none;
     }
 
@@ -1668,9 +1657,6 @@ body {
 
     .header h1 {
         font-size: 1.125rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
     }
 
     .subtitle {
@@ -1711,41 +1697,10 @@ body {
 
     .header-content h1 {
         font-size: 0.9375rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
     }
 
     .header-content .subtitle {
         font-size: 0.6875rem;
-    }
-
-    .header-actions {
-        display: flex;
-        gap: 2px;
-    }
-
-    .header-actions .btn {
-        padding: var(--space-xs);
-    }
-
-    .header-actions .btn span,
-    .header-actions #about-btn span:last-child,
-    .header-actions #share-btn span:last-child {
-        display: none;
-    }
-
-    /* Hide text labels on mobile, show only icons */
-    .btn-text {
-        display: none;
-    }
-
-    #about-btn, #share-btn, #theme-toggle {
-        padding: 6px;
-    }
-
-    #download-csv {
-        display: none;
     }
 
     .tabs {
