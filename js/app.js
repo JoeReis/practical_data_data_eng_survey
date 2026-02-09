@@ -10,6 +10,7 @@ let lastSqlResults = null; // Store last query results for export
 let codeMirrorLoaded = false; // Lazy-load tracking
 let codeMirrorLoading = false;
 let responsesSearchTerm = ''; // Search term for responses tab
+let compareMode = false; // Comparison mode state
 
 // Chart filters - applied by clicking on chart bars
 // Structure: { column: value, ... }
@@ -99,6 +100,8 @@ async function init() {
         initializeKeyboardShortcuts();
         initializeShortcutsModal();
         initializeChartTooltip();
+        initializeSqlHistory();
+        initializeComparisonMode();
         
         updateLoadingProgress('Ready!', 100);
         
@@ -490,6 +493,13 @@ const chartConfig = {
 };
 
 async function updateCharts() {
+    // Show skeletons immediately for visual feedback
+    if (!compareMode) {
+        for (const chartId of Object.keys(chartConfig)) {
+            showChartSkeleton(document.getElementById(chartId));
+        }
+    }
+    
     const whereClause = getWhereClause();
     
     // Get total filtered count for percentage calculations
@@ -497,8 +507,40 @@ async function updateCharts() {
     const totalFiltered = Number(totalResult.toArray()[0].count);
     
     for (const [chartId, config] of Object.entries(chartConfig)) {
-        await renderBarChart(chartId, config.column, whereClause, config.limit, totalFiltered);
+        if (compareMode) {
+            await renderComparisonChart(chartId, config.column, config.limit);
+        } else {
+            await renderBarChart(chartId, config.column, whereClause, config.limit, totalFiltered);
+        }
     }
+}
+
+// ===== Drill-down from Charts =====
+function drillDownToResponses(column, value) {
+    // Switch to responses tab
+    const responsesTab = document.querySelector('.tab[data-tab="responses"]');
+    if (responsesTab) {
+        responsesTab.click();
+        // After a brief delay to let the tab activate, scroll to top
+        setTimeout(() => {
+            const responsesContent = document.getElementById('responses-tab');
+            if (responsesContent) responsesContent.scrollTop = 0;
+        }, 100);
+    }
+}
+
+function showChartSkeleton(container) {
+    let html = '<div class="chart-skeleton">';
+    for (let i = 0; i < 5; i++) {
+        html += `
+            <div class="chart-skeleton-row">
+                <div class="chart-skeleton-label"></div>
+                <div class="chart-skeleton-bar"></div>
+                <div class="chart-skeleton-value"></div>
+            </div>`;
+    }
+    html += '</div>';
+    container.innerHTML = html;
 }
 
 async function renderBarChart(chartId, column, whereClause, limit, totalFiltered) {
@@ -557,6 +599,7 @@ async function renderBarChart(chartId, column, whereClause, limit, totalFiltered
             // Encode the value for use in data attribute
             const encodedValue = encodeURIComponent(row.label);
             
+            // Start bars at width: 0 for animated entrance
             html += `
                 <div class="chart-bar-row chart-bar-clickable ${activeClass}" 
                      data-column="${column}" 
@@ -564,15 +607,35 @@ async function renderBarChart(chartId, column, whereClause, limit, totalFiltered
                      title="Click to filter by ${escapeHtml(row.label)}">
                     <span class="chart-bar-label">${escapeHtml(label)}</span>
                     <div class="chart-bar-track">
-                        <div class="chart-bar-fill" style="width: ${barWidth}%; background: ${color};"></div>
+                        <div class="chart-bar-fill" data-target-width="${barWidth}" style="width: 0%; background: ${color};"></div>
                     </div>
                     <span class="chart-bar-value">${displayValue}</span>
                 </div>
             `;
         });
         
+        // Drill-down link when chart filters are active
+        if (activeFilterValue) {
+            const filteredCount = rows.find(r => r.label === activeFilterValue);
+            if (filteredCount) {
+                html += `
+                    <button class="chart-drilldown" data-column="${column}" data-value="${encodeURIComponent(activeFilterValue)}">
+                        View ${Number(filteredCount.count).toLocaleString()} matching responses →
+                    </button>`;
+            }
+        }
+        
         html += '</div>';
         container.innerHTML = html;
+        
+        // Animate bars to target width
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                container.querySelectorAll('.chart-bar-fill').forEach(fill => {
+                    fill.style.width = fill.dataset.targetWidth + '%';
+                });
+            });
+        });
         
         // Attach click handlers to bars
         container.querySelectorAll('.chart-bar-clickable').forEach(bar => {
@@ -580,6 +643,13 @@ async function renderBarChart(chartId, column, whereClause, limit, totalFiltered
                 const col = bar.dataset.column;
                 const value = decodeURIComponent(bar.dataset.value);
                 addChartFilter(col, value);
+            });
+        });
+        
+        // Drill-down click handler
+        container.querySelectorAll('.chart-drilldown').forEach(btn => {
+            btn.addEventListener('click', () => {
+                drillDownToResponses(btn.dataset.column, decodeURIComponent(btn.dataset.value));
             });
         });
         
@@ -809,6 +879,9 @@ async function runQuery() {
         
         // Store results for export
         lastSqlResults = { columns, rows };
+        
+        // Save to query history
+        saveSqlQuery(sql, duration);
         
         showQueryResults({ columns, rows });
         
@@ -2075,6 +2148,316 @@ function toggleShortcutsModal() {
     } else {
         modal.classList.add('open');
         document.body.style.overflow = 'hidden';
+    }
+}
+
+// ===== SQL Query History =====
+const SQL_HISTORY_KEY = 'sqlQueryHistory';
+const SQL_HISTORY_MAX = 20;
+
+function getSqlHistory() {
+    try {
+        return JSON.parse(localStorage.getItem(SQL_HISTORY_KEY) || '[]');
+    } catch { return []; }
+}
+
+function saveSqlQuery(sql, duration) {
+    try {
+        const history = getSqlHistory();
+        // Don't save duplicates of the most recent query
+        if (history.length > 0 && history[0].sql === sql) return;
+        
+        history.unshift({
+            sql: sql.trim(),
+            time: new Date().toISOString(),
+            duration
+        });
+        // Keep only the last N
+        if (history.length > SQL_HISTORY_MAX) history.length = SQL_HISTORY_MAX;
+        localStorage.setItem(SQL_HISTORY_KEY, JSON.stringify(history));
+    } catch { /* ignore */ }
+}
+
+function clearSqlHistory() {
+    try { localStorage.removeItem(SQL_HISTORY_KEY); } catch { /* ignore */ }
+}
+
+function initializeSqlHistory() {
+    const btn = document.getElementById('sql-history-btn');
+    const dropdown = document.getElementById('sql-history-dropdown');
+    const clearBtn = document.getElementById('sql-history-clear');
+    const list = document.getElementById('sql-history-list');
+    
+    if (!btn || !dropdown) return;
+    
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('open');
+        if (dropdown.classList.contains('open')) {
+            renderSqlHistory();
+        }
+    });
+    
+    clearBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        clearSqlHistory();
+        renderSqlHistory();
+        showToast('Query history cleared', 'success');
+    });
+    
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target) && e.target !== btn) {
+            dropdown.classList.remove('open');
+        }
+    });
+}
+
+function renderSqlHistory() {
+    const list = document.getElementById('sql-history-list');
+    const history = getSqlHistory();
+    
+    if (history.length === 0) {
+        list.innerHTML = '<div class="sql-history-empty">No queries yet. Run a query to see it here.</div>';
+        return;
+    }
+    
+    list.innerHTML = history.map((item, i) => {
+        const timeAgo = formatTimeAgo(item.time);
+        const preview = item.sql.replace(/\s+/g, ' ').substring(0, 80);
+        return `
+            <button class="sql-history-item" data-idx="${i}" title="${escapeHtml(item.sql)}">
+                ${escapeHtml(preview)}${item.sql.length > 80 ? '...' : ''}
+                <span class="sql-history-time">${timeAgo}${item.duration ? ` • ${item.duration}ms` : ''}</span>
+            </button>`;
+    }).join('');
+    
+    list.querySelectorAll('.sql-history-item').forEach(item => {
+        item.addEventListener('click', async () => {
+            const history = getSqlHistory();
+            const query = history[parseInt(item.dataset.idx)];
+            if (query) {
+                await ensureSqlEditorReady();
+                editor.setValue(query.sql);
+                document.getElementById('sql-history-dropdown').classList.remove('open');
+                // Switch to SQL tab if not already
+                const sqlTab = document.querySelector('.tab[data-tab="sql"]');
+                if (sqlTab && !sqlTab.classList.contains('active')) {
+                    sqlTab.click();
+                }
+            }
+        });
+    });
+}
+
+function formatTimeAgo(isoString) {
+    const diff = Date.now() - new Date(isoString).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return `${days}d ago`;
+    return new Date(isoString).toLocaleDateString();
+}
+
+// ===== Comparison Mode =====
+function initializeComparisonMode() {
+    const toggleBtn = document.getElementById('compare-toggle');
+    const controls = document.getElementById('compare-controls');
+    const dimSelect = document.getElementById('compare-dim');
+    const valASelect = document.getElementById('compare-val-a');
+    const valBSelect = document.getElementById('compare-val-b');
+    const runBtn = document.getElementById('compare-run');
+    
+    if (!toggleBtn || !controls) return;
+    
+    toggleBtn.addEventListener('click', () => {
+        compareMode = !compareMode;
+        toggleBtn.classList.toggle('active', compareMode);
+        controls.classList.toggle('visible', compareMode);
+        
+        if (compareMode) {
+            populateCompareValues();
+        } else {
+            updateCharts();
+        }
+    });
+    
+    dimSelect.addEventListener('change', () => {
+        populateCompareValues();
+    });
+    
+    runBtn.addEventListener('click', () => {
+        updateCharts();
+    });
+}
+
+async function populateCompareValues() {
+    const dim = document.getElementById('compare-dim').value;
+    const valASelect = document.getElementById('compare-val-a');
+    const valBSelect = document.getElementById('compare-val-b');
+    
+    try {
+        const result = await conn.query(`
+            SELECT DISTINCT ${dim} as value, COUNT(*) as count
+            FROM survey
+            WHERE ${dim} IS NOT NULL
+            GROUP BY ${dim}
+            ORDER BY count DESC
+            LIMIT 20
+        `);
+        
+        const rows = result.toArray();
+        
+        const makeOptions = (select, defaultIdx) => {
+            select.innerHTML = '';
+            rows.forEach((row, i) => {
+                const opt = document.createElement('option');
+                opt.value = row.value;
+                opt.textContent = `${row.value} (${Number(row.count).toLocaleString()})`;
+                if (i === defaultIdx) opt.selected = true;
+                select.appendChild(opt);
+            });
+        };
+        
+        makeOptions(valASelect, 0);
+        makeOptions(valBSelect, Math.min(1, rows.length - 1));
+        
+    } catch (e) {
+        console.error('Compare populate error:', e);
+    }
+}
+
+async function renderComparisonChart(chartId, column, limit) {
+    const container = document.getElementById(chartId);
+    const dim = document.getElementById('compare-dim').value;
+    const valA = document.getElementById('compare-val-a').value;
+    const valB = document.getElementById('compare-val-b').value;
+    
+    if (!valA || !valB) {
+        container.innerHTML = '<p class="placeholder-text">Select two segments to compare</p>';
+        return;
+    }
+    
+    try {
+        const escapedA = valA.replace(/'/g, "''");
+        const escapedB = valB.replace(/'/g, "''");
+        
+        // Get base filter clause (from sidebar)
+        const baseWhere = getWhereClause();
+        const wherePrefix = baseWhere ? `${baseWhere} AND` : 'WHERE';
+        
+        // Query for segment A
+        const queryA = `
+            SELECT ${column} as label, COUNT(*) as count
+            FROM survey
+            ${wherePrefix} ${dim} = '${escapedA}' AND ${column} IS NOT NULL
+            GROUP BY ${column}
+            ORDER BY count DESC
+            LIMIT ${limit}
+        `;
+        
+        // Query for segment B
+        const queryB = `
+            SELECT ${column} as label, COUNT(*) as count
+            FROM survey
+            ${wherePrefix} ${dim} = '${escapedB}' AND ${column} IS NOT NULL
+            GROUP BY ${column}
+            ORDER BY count DESC
+            LIMIT ${limit}
+        `;
+        
+        // Total counts for percentages
+        const totalAQuery = `SELECT COUNT(*) as c FROM survey ${wherePrefix} ${dim} = '${escapedA}'`;
+        const totalBQuery = `SELECT COUNT(*) as c FROM survey ${wherePrefix} ${dim} = '${escapedB}'`;
+        
+        const [resultA, resultB, totalAResult, totalBResult] = await Promise.all([
+            conn.query(queryA),
+            conn.query(queryB),
+            conn.query(totalAQuery),
+            conn.query(totalBQuery)
+        ]);
+        
+        const rowsA = resultA.toArray();
+        const rowsB = resultB.toArray();
+        const totalA = Number(totalAResult.toArray()[0].c);
+        const totalB = Number(totalBResult.toArray()[0].c);
+        
+        // Merge labels from both
+        const allLabels = new Set();
+        const mapA = new Map();
+        const mapB = new Map();
+        
+        rowsA.forEach(r => { allLabels.add(r.label); mapA.set(r.label, Number(r.count)); });
+        rowsB.forEach(r => { allLabels.add(r.label); mapB.set(r.label, Number(r.count)); });
+        
+        // Sort by combined count
+        const labels = Array.from(allLabels).sort((a, b) => {
+            return ((mapA.get(b) || 0) + (mapB.get(b) || 0)) - ((mapA.get(a) || 0) + (mapB.get(a) || 0));
+        }).slice(0, limit);
+        
+        if (labels.length === 0) {
+            container.innerHTML = `<div class="empty-state"><p>No data for this comparison</p></div>`;
+            return;
+        }
+        
+        const maxCount = Math.max(
+            ...labels.map(l => Math.max(mapA.get(l) || 0, mapB.get(l) || 0))
+        );
+        
+        let html = '<div class="chart-bar-container">';
+        
+        labels.forEach(label => {
+            const countA = mapA.get(label) || 0;
+            const countB = mapB.get(label) || 0;
+            const widthA = maxCount > 0 ? (countA / maxCount) * 100 : 0;
+            const widthB = maxCount > 0 ? (countB / maxCount) * 100 : 0;
+            
+            let valADisp, valBDisp;
+            if (chartMetric === 'percent') {
+                valADisp = totalA > 0 ? `${((countA / totalA) * 100).toFixed(1)}%` : '0%';
+                valBDisp = totalB > 0 ? `${((countB / totalB) * 100).toFixed(1)}%` : '0%';
+            } else {
+                valADisp = countA.toLocaleString();
+                valBDisp = countB.toLocaleString();
+            }
+            
+            html += `
+                <div class="chart-bar-row">
+                    <span class="chart-bar-label">${escapeHtml(truncateText(label, 28))}</span>
+                    <div class="compare-bar-group">
+                        <div class="compare-bar-track">
+                            <div class="compare-bar-fill-a" data-target-width="${widthA}" style="width: 0%;"></div>
+                        </div>
+                        <div class="compare-bar-track">
+                            <div class="compare-bar-fill-b" data-target-width="${widthB}" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div class="compare-values">
+                        <span class="compare-val-a">${valADisp}</span>
+                        <span class="compare-val-b">${valBDisp}</span>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        container.innerHTML = html;
+        
+        // Animate bars
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                container.querySelectorAll('.compare-bar-fill-a, .compare-bar-fill-b').forEach(fill => {
+                    fill.style.width = fill.dataset.targetWidth + '%';
+                });
+            });
+        });
+        
+    } catch (error) {
+        console.error(`Comparison chart error ${chartId}:`, error);
+        container.innerHTML = `<p class="error-text">Error: ${error.message}</p>`;
     }
 }
 

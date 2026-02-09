@@ -662,6 +662,7 @@ body {
 .charts-controls {
     display: flex;
     justify-content: flex-end;
+    gap: var(--space-lg);
     margin-bottom: var(--space-md);
 }
 
@@ -2890,6 +2891,286 @@ body {
         max-width: none;
         width: 100%;
         order: -1;
+    }
+}
+
+/* ===== Chart Loading Skeletons ===== */
+.chart-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.chart-skeleton-row {
+    display: grid;
+    grid-template-columns: 180px 1fr 50px;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.chart-skeleton-label,
+.chart-skeleton-bar,
+.chart-skeleton-value {
+    background: var(--color-bg-card);
+    border-radius: var(--radius-sm);
+    animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+.chart-skeleton-label {
+    height: 14px;
+    width: 70%;
+}
+
+.chart-skeleton-bar {
+    height: 24px;
+}
+
+.chart-skeleton-value {
+    height: 14px;
+    width: 30px;
+    margin-left: auto;
+}
+
+@keyframes skeletonPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+}
+
+.chart-skeleton-row:nth-child(1) .chart-skeleton-bar { width: 90%; }
+.chart-skeleton-row:nth-child(2) .chart-skeleton-bar { width: 70%; }
+.chart-skeleton-row:nth-child(3) .chart-skeleton-bar { width: 55%; }
+.chart-skeleton-row:nth-child(4) .chart-skeleton-bar { width: 40%; }
+.chart-skeleton-row:nth-child(5) .chart-skeleton-bar { width: 25%; }
+
+.chart-skeleton-row:nth-child(2) { animation-delay: 0.1s; }
+.chart-skeleton-row:nth-child(3) { animation-delay: 0.2s; }
+.chart-skeleton-row:nth-child(4) { animation-delay: 0.3s; }
+.chart-skeleton-row:nth-child(5) { animation-delay: 0.4s; }
+
+@media (max-width: 900px) {
+    .chart-skeleton-row {
+        grid-template-columns: 120px 1fr 40px;
+    }
+}
+
+/* ===== SQL Query History ===== */
+.sql-history-wrapper {
+    position: relative;
+}
+
+.sql-history-btn {
+    font-size: 0.75rem !important;
+    padding: var(--space-xs) var(--space-sm) !important;
+}
+
+.sql-history-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 50;
+    min-width: 320px;
+    max-width: 500px;
+    max-height: 300px;
+    overflow-y: auto;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    margin-top: var(--space-xs);
+}
+
+.sql-history-dropdown.open {
+    display: block;
+}
+
+.sql-history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.sql-history-clear {
+    font-size: 0.6875rem !important;
+    padding: 2px var(--space-sm) !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+}
+
+.sql-history-item {
+    display: block;
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--color-border-muted);
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.1s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sql-history-item:hover {
+    background: var(--color-bg-card);
+    color: var(--color-text-primary);
+}
+
+.sql-history-item:last-child {
+    border-bottom: none;
+}
+
+.sql-history-time {
+    display: block;
+    font-family: var(--font-sans);
+    font-size: 0.625rem;
+    color: var(--color-text-muted);
+    margin-top: 2px;
+}
+
+.sql-history-empty {
+    padding: var(--space-lg);
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: 0.8125rem;
+    font-style: italic;
+}
+
+/* ===== Drill-down Link ===== */
+.chart-drilldown {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin-top: var(--space-sm);
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-accent);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s ease;
+    font-family: var(--font-sans);
+}
+
+.chart-drilldown:hover {
+    background: var(--color-accent-muted);
+}
+
+/* ===== Comparison Mode ===== */
+.compare-controls {
+    display: none;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-lg);
+    background: var(--color-bg-elevated);
+    border-bottom: 1px solid var(--color-border);
+    animation: fadeIn 0.2s ease;
+}
+
+.compare-controls.visible {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.compare-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.compare-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+.compare-label-a {
+    color: var(--chart-1);
+}
+
+.compare-label-b {
+    color: var(--chart-4);
+}
+
+.compare-group .filter-select {
+    min-width: 160px;
+    width: auto;
+}
+
+.compare-bar-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.compare-bar-track {
+    height: 12px;
+    background: var(--color-bg-card);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+}
+
+.compare-bar-fill-a {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--chart-1);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.compare-bar-fill-b {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--chart-4);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.compare-values {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    min-width: 50px;
+}
+
+.compare-val-a { color: var(--chart-1); }
+.compare-val-b { color: var(--chart-4); }
+
+.compare-btn {
+    white-space: nowrap;
+}
+
+.compare-btn.active {
+    background: var(--color-accent-muted);
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+}
+
+@media (max-width: 480px) {
+    .compare-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .compare-group .filter-select {
+        min-width: unset;
+        width: 100%;
     }
 }
 
