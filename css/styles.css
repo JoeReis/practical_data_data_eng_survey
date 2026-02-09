@@ -1630,11 +1630,36 @@ body {
     .main-content {
         grid-template-columns: 1fr;
     }
-    
+
     .mobile-only {
         display: flex;
     }
-    
+
+    .header {
+        padding: var(--space-sm) var(--space-md);
+        gap: var(--space-sm);
+    }
+
+    .header-left {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .header-actions {
+        flex-shrink: 0;
+        gap: var(--space-xs);
+    }
+
+    /* Hide text labels on tablet, show only icons */
+    .btn-text {
+        display: none;
+    }
+
+    #download-csv {
+        display: none;
+    }
+
     .filter-panel {
         display: none;
         position: fixed;
@@ -1649,20 +1674,20 @@ body {
         overflow-y: auto;
         animation: slideIn 0.2s ease;
     }
-    
+
     .filter-panel.hidden-for-tab {
         display: none !important;
     }
-    
+
     @keyframes slideIn {
         from { transform: translateX(-100%); }
         to { transform: translateX(0); }
     }
-    
+
     .filter-panel.open {
         display: block;
     }
-    
+
     .filter-backdrop {
         position: fixed;
         inset: 0;
@@ -1670,21 +1695,29 @@ body {
         background: rgba(0, 0, 0, 0.5);
         z-index: 199;
     }
-    
+
     .charts-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .chart-bar-row {
         grid-template-columns: 120px 1fr 40px;
     }
-    
+
     .header h1 {
-        font-size: 1.25rem;
+        font-size: 1.125rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
-    
+
     .subtitle {
         font-size: 0.75rem;
+    }
+
+    .tabs {
+        padding: var(--space-sm) var(--space-md);
+        border-top: 1px solid var(--color-border-muted);
     }
     
     /* Tables scroll horizontally on mobile */
@@ -1704,58 +1737,63 @@ body {
 
 @media (max-width: 480px) {
     .header {
-        padding: var(--space-sm) var(--space-md);
+        padding: var(--space-sm) var(--space-sm);
         flex-wrap: wrap;
-        gap: var(--space-sm);
+        gap: var(--space-xs);
     }
-    
+
     .header-left {
         flex: 1;
         min-width: 0;
     }
-    
+
     .header-content h1 {
-        font-size: 1rem;
+        font-size: 0.9375rem;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    
+
+    .header-content .subtitle {
+        font-size: 0.6875rem;
+    }
+
     .header-actions {
         display: flex;
-        gap: var(--space-xs);
+        gap: 2px;
     }
-    
+
     .header-actions .btn {
         padding: var(--space-xs);
     }
-    
+
     .header-actions .btn span,
     .header-actions #about-btn span:last-child,
     .header-actions #share-btn span:last-child {
         display: none;
     }
-    
+
     /* Hide text labels on mobile, show only icons */
     .btn-text {
         display: none;
     }
-    
+
     #about-btn, #share-btn, #theme-toggle {
-        padding: var(--space-sm);
+        padding: 6px;
     }
-    
+
     #download-csv {
         display: none;
     }
-    
+
     .tabs {
-        padding: var(--space-sm) var(--space-md);
+        padding: var(--space-xs) var(--space-sm);
+        gap: 2px;
     }
-    
+
     .tab {
-        padding: var(--space-sm) var(--space-md);
-        font-size: 0.8125rem;
+        padding: 6px var(--space-sm);
+        font-size: 0.75rem;
     }
     
     #charts-tab {
